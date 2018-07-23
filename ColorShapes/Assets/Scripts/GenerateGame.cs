@@ -10,10 +10,14 @@ public class GenerateGame : MonoBehaviour {
 
     public int numberColors;
     public int numPlayers;
+    public int shape;
 
     private List<Vector2> startLocations = new List<Vector2>();
 
     public GameObject BoxPrefab;
+    public GameObject HexagonPrefab;
+
+
 
     public static GenerateGame GenerateGameSingle;
     //create singleton of class
@@ -33,11 +37,12 @@ public class GenerateGame : MonoBehaviour {
     void Start ()
     {
         //start variables
-        width = 50;
-        height = 10;
-        numberColors = 5;
+        width = 15;
+        height = 15;
+        numberColors = 4;
         numPlayers = 2;
         gameBoard = new GameObject[width, height];
+        shape = 1;
 
         StartGameGeneration();
 
@@ -56,24 +61,44 @@ public class GenerateGame : MonoBehaviour {
 
     private void StartGameGeneration()
     {
-        //makes grid; Instantiate color square
+        GameObject shapePrefab;
+
+        if(shape == 0)
+        {
+            shapePrefab = BoxPrefab;
+        }
+        else if(shape == 1)
+        {
+            shapePrefab = HexagonPrefab;
+        }
+        else
+        {
+            shapePrefab = BoxPrefab;
+        }
+
+        //makes grid; Instantiate color shape
         for (int x = 0; x < width; x++)
         {
             for (int y = 0; y < height; y++)
             {
                 int color = Random.Range(0, numberColors);
                 
-                var tempBox = Instantiate(BoxPrefab);
+                var tempBox = Instantiate(shapePrefab);
                 gameBoard[x, y] = tempBox;
                 tempBox.GetComponent<SpriteRenderer>().color = PickColor(color);
-                tempBox.transform.position = new Vector3(x - width / 2, y - height / 2, 0);
 
-                //hexagon pattern
-                //if (x % 2 == 1)
-                //    tempBox.transform.position = new Vector3(x - width / 2, y - height / 2 + .25f, 0);
-                //else
-                //    tempBox.transform.position = new Vector3(x - width / 2, y - height / 2 - .25f, 0);
-
+                if(shape == 0)
+                {
+                    tempBox.transform.position = new Vector3(x - width / 2, y - height / 2, 0);
+                }
+                else if(shape == 1)
+                {
+                    //hexagon pattern
+                    if (x % 2 == 1)
+                        tempBox.transform.position = new Vector3(x * .8f - width / 2, y * .9f - .25f - (height / 2 * .75f) - 1.5f, 0);
+                    else
+                        tempBox.transform.position = new Vector3(x * .8f - width / 2, y * .9f + .25f - (height / 2 * .75f) - 1.5f, 0);
+                }
             }
         }
 
