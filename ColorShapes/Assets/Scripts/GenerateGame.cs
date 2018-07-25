@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class GenerateGame : MonoBehaviour {
 
@@ -12,12 +13,17 @@ public class GenerateGame : MonoBehaviour {
     public int numPlayers;
     public int shape;
 
-    private List<Vector2> startLocations = new List<Vector2>();
+    private List<Vector2> startLocations;
 
     public GameObject BoxPrefab;
     public GameObject HexagonPrefab;
+    public GameObject TriabglePrefab;
 
+    public GameObject ButtonSquarePrefab;
 
+    public GameObject ColorButtonPanel;
+    CanvasGroup EndGamePanel;
+    CanvasGroup StartGamePanel;
 
     public static GenerateGame GenerateGameSingle;
     //create singleton of class
@@ -25,7 +31,7 @@ public class GenerateGame : MonoBehaviour {
     {
         if (GenerateGameSingle == null)
         {
-            DontDestroyOnLoad(gameObject);
+            //DontDestroyOnLoad(gameObject);
             GenerateGameSingle = this;
         }
         else if (GenerateGameSingle != this)
@@ -36,14 +42,11 @@ public class GenerateGame : MonoBehaviour {
     // Use this for initialization
     void Start ()
     {
-        //start variables
-        width = 15;
-        height = 15;
-        numberColors = 4;
-        numPlayers = 2;
-        gameBoard = new GameObject[width, height];
-        shape = 1;
-
+        ColorButtonPanel = GameObject.Find("ColorButtonPanel");
+        EndGamePanel = GameObject.Find("EndGamePanel").GetComponent<CanvasGroup>();
+        StartGamePanel = GameObject.Find("StartGamePanel").GetComponent<CanvasGroup>();
+        // width , height, number colors, number players, number of sides on shape
+        StartGameCondition(10, 10, 7, 2, 6);
         StartGameGeneration();
 
     }
@@ -54,20 +57,39 @@ public class GenerateGame : MonoBehaviour {
 		
 	}
 
-    void OnMouseDown()
+    // width , height, number colors, number players, number of sides on shape
+    public void StartGameCondition(int w, int h, int numCol, int numPlay, int s)
     {
-        Destroy(gameObject);
+        //start variables
+        width = w;
+        height = h;
+        numberColors = numCol;
+        numPlayers = numPlay;
+        shape = s;
     }
 
-    private void StartGameGeneration()
+    public void StartGameGeneration()
     {
         GameObject shapePrefab;
+        GameController.GameControllerSingle.turn = Random.Range(0, numPlayers);
 
-        if(shape == 0)
+        EndGamePanel.alpha = 1;
+        EndGamePanel.interactable = true;
+        EndGamePanel.blocksRaycasts = true;
+        StartGamePanel.alpha = 0;
+        StartGamePanel.interactable = false;
+        StartGamePanel.blocksRaycasts = false;
+
+        //sets shape prefab
+        if (shape == 3)
+        {
+            shapePrefab = TriabglePrefab;
+        }
+        else if (shape == 4)
         {
             shapePrefab = BoxPrefab;
         }
-        else if(shape == 1)
+        else if(shape == 6)
         {
             shapePrefab = HexagonPrefab;
         }
@@ -76,6 +98,7 @@ public class GenerateGame : MonoBehaviour {
             shapePrefab = BoxPrefab;
         }
 
+        gameBoard = new GameObject[width, height];
         //makes grid; Instantiate color shape
         for (int x = 0; x < width; x++)
         {
@@ -87,11 +110,23 @@ public class GenerateGame : MonoBehaviour {
                 gameBoard[x, y] = tempBox;
                 tempBox.GetComponent<SpriteRenderer>().color = PickColor(color);
 
-                if(shape == 0)
+                if (shape == 3)
                 {
+                    //triangle pattern; had to change center of triangle in sprite editor
+                    if ((x + y) % 2 == 1)
+                    {
+                        tempBox.transform.eulerAngles = new Vector3(tempBox.transform.eulerAngles.x, tempBox.transform.eulerAngles.y, 180);
+                        tempBox.transform.position = new Vector3(x * .5f - width / 2, y * .8f - height / 2, 0);
+                    }
+                    else
+                        tempBox.transform.position = new Vector3(x * .5f - width / 2, y * .8f - height / 2, 0);
+                }
+                else if (shape == 4)
+                {
+                    //square
                     tempBox.transform.position = new Vector3(x - width / 2, y - height / 2, 0);
                 }
-                else if(shape == 1)
+                else if(shape == 6)
                 {
                     //hexagon pattern
                     if (x % 2 == 1)
@@ -101,17 +136,20 @@ public class GenerateGame : MonoBehaviour {
                 }
             }
         }
+        
+        //rest buttons
+        GameController.GameControllerSingle.buttons = new List<GameObject>();
 
-        //make player Buttons
-        GameObject ColorButtonPanel = GameObject.Find("ColorButtonPanel");
         for (int y = 0; y < numberColors; y++)
         {
-            var tempBox = Instantiate(BoxPrefab, ColorButtonPanel.transform);
+            var tempBox = Instantiate(ButtonSquarePrefab, ColorButtonPanel.transform);
+            tempBox.GetComponent<Image>().color = PickColor(y);
+            tempBox.GetComponent<Button>().onClick.AddListener(() => GameController.GameControllerSingle.ButtonClick(tempBox.GetComponent<Image>().color));
             GameController.GameControllerSingle.buttons.Add(tempBox);
-            tempBox.GetComponent<SpriteRenderer>().color = PickColor(y);
-            tempBox.GetComponent<SpriteRenderer>().size = new Vector2(4, 1);
-            //set position from panel not world
-            tempBox.transform.localPosition = new Vector3(0, ColorButtonPanel.GetComponent<SpriteRenderer>().size.y / 2f - .5f - y, 0);
+            //tempBox.GetComponent<SpriteRenderer>().color = PickColor(y);
+            //tempBox.GetComponent<SpriteRenderer>().size = new Vector2(4, 1);
+            ////set position from panel not world
+            //tempBox.transform.localPosition = new Vector3(0, ColorButtonPanel.GetComponent<SpriteRenderer>().size.y / 2f - .5f - y, 0);
         }
 
         StartConitions();
@@ -119,6 +157,10 @@ public class GenerateGame : MonoBehaviour {
 
     private void StartConitions()
     {
+        //clear if this is game reset
+        GameController.GameControllerSingle.Players = new List<GameController.Player>();
+        startLocations = new List<Vector2>();
+
         //possible player starts
         startLocations.Add(new Vector2(0, 0));
         startLocations.Add(new Vector2(width - 1, height - 1));
@@ -134,6 +176,106 @@ public class GenerateGame : MonoBehaviour {
             gameBoard[(int)startLocations[ranStart].x, (int)startLocations[ranStart].y].GetComponent<SpriteRenderer>().color = Color.black;
             //stop player from being in same spot
             startLocations.RemoveAt(ranStart);
+        }
+    }
+
+    public void RestartGame()
+    {
+        for (int x = 0; x < width; x++)
+        {
+            for (int y = 0; y < height; y++)
+            {
+                int color = Random.Range(0, numberColors);
+                gameBoard[x,y].GetComponent<SpriteRenderer>().color = PickColor(color);
+            }
+        }
+        StartConitions();
+    }
+
+    public void NewGame()
+    {
+        //remove all old shapes
+        for (int x = 0; x < width; x++)
+        {
+            for (int y = 0; y < height; y++)
+            {
+                Destroy(gameBoard[x, y].GetComponent<SpriteRenderer>().gameObject);
+            }
+        }
+        
+        //remove all old button colors
+        foreach(Transform button in ColorButtonPanel.transform)
+        {
+            Destroy(button.gameObject);
+        }
+
+        //restart game by call start methods
+        //StartGameCondition(5, 5, 5, 2, 4);
+        //StartGameGeneration();
+
+        //stop reading inputs
+        GameController.GameControllerSingle.turn = -1;
+
+        //panel options after newgame button click
+        EndGamePanel.alpha = 0;
+        EndGamePanel.interactable = false;
+        EndGamePanel.blocksRaycasts = false;
+        StartGamePanel.alpha = 1;
+        StartGamePanel.interactable = true;
+        StartGamePanel.blocksRaycasts = true;
+    }
+
+    public void ChangeWidth()
+    {
+        int newWidth;
+        bool temp = int.TryParse(GameObject.Find("WidthInputField").GetComponent<InputField>().textComponent.text, out newWidth);
+        if (temp)
+        {
+            width = newWidth;
+        }
+    }
+
+
+    public void ChangeHeight()
+    {
+        int newHeight;
+        bool temp = int.TryParse(GameObject.Find("HeightInputField").GetComponent<InputField>().textComponent.text, out newHeight);
+        if (temp)
+        {
+            height = newHeight;
+        }
+    }
+
+    public void ChangeNumberColors()
+    {
+        int numColors;
+        bool temp = int.TryParse(GameObject.Find("ColorInputField").GetComponent<InputField>().textComponent.text, out numColors);
+        if (temp)
+        {
+            numberColors = numColors;
+        }
+    }
+
+    public void ChangeShape()
+    {
+        var lableString = GameObject.Find("ShapeDropdown").GetComponent<Dropdown>().value;
+
+        //order object are in the dropdown menu
+        if (lableString == 0)
+        {
+            shape = 3;
+        }
+        else if (lableString == 1)
+        {
+            shape = 3;
+        }
+        else if (lableString == 2)
+        {
+            shape = 4;
+        }
+        else if (lableString == 3)
+        {
+            shape = 6;
         }
     }
 

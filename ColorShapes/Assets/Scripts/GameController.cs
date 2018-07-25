@@ -1,14 +1,15 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class GameController : MonoBehaviour {
 
-    public List<GameObject> buttons = new List<GameObject>();
+    public List<GameObject> buttons;
 
-    public List<Player> Players = new List<Player>();
-
+    public List<Player> Players;
     public int numberActive = 0;
+    public int turn = 0;
 
     //passing by ref not value; cant be a stuct
     public class Player
@@ -37,8 +38,6 @@ public class GameController : MonoBehaviour {
         Players.Add(newPlayer);
     }
 
-    int turn = 0;
-
     public static GameController GameControllerSingle;
 
     //create singleton of class
@@ -65,39 +64,41 @@ public class GameController : MonoBehaviour {
 
         if(turn != -1)
         {
-            if (Input.GetKeyDown(KeyCode.Alpha1))
-            {
-                ButtonClick(Color.red, Players[turn]);
-            }
-            if (Input.GetKeyDown(KeyCode.Alpha2))
-            {
-                ButtonClick(Color.yellow, Players[turn]);
-            }
-            if (Input.GetKeyDown(KeyCode.Alpha3))
-            {
-                ButtonClick(Color.green, Players[turn]);
-            }
-            if (Input.GetKeyDown(KeyCode.Alpha4))
-            {
-                ButtonClick(Color.cyan, Players[turn]);
-            }
-            if (Input.GetKeyDown(KeyCode.Alpha5))
-            {
-                ButtonClick(Color.blue, Players[turn]);
-            }
-            if (Input.GetKeyDown(KeyCode.Alpha6))
-            {
-                ButtonClick(Color.magenta, Players[turn]);
-            }
-            if (Input.GetKeyDown(KeyCode.Alpha7))
-            {
-                ButtonClick(Color.white, Players[turn]);
-            }
+            //if (Input.GetKeyDown(KeyCode.Alpha1))
+            //{
+            //    ButtonClick(Color.red, Players[turn]);
+            //}
+            //if (Input.GetKeyDown(KeyCode.Alpha2))
+            //{
+            //    ButtonClick(Color.yellow, Players[turn]);
+            //}
+            //if (Input.GetKeyDown(KeyCode.Alpha3))
+            //{
+            //    ButtonClick(Color.green, Players[turn]);
+            //}
+            //if (Input.GetKeyDown(KeyCode.Alpha4))
+            //{
+            //    ButtonClick(Color.cyan, Players[turn]);
+            //}
+            //if (Input.GetKeyDown(KeyCode.Alpha5))
+            //{
+            //    ButtonClick(Color.blue, Players[turn]);
+            //}
+            //if (Input.GetKeyDown(KeyCode.Alpha6))
+            //{
+            //    ButtonClick(Color.magenta, Players[turn]);
+            //}
+            //if (Input.GetKeyDown(KeyCode.Alpha7))
+            //{
+            //    ButtonClick(Color.white, Players[turn]);
+            //}
         }
     }
 
-    void ButtonClick(Color buttonColor, Player CurPlayer)
+    public void ButtonClick(Color buttonColor)
     {
+        Player CurPlayer = Players[turn];
+
         //make sure another play doesnt have that color
         bool colorPickValid = true;
         foreach(Player aPlayer in Players)
@@ -202,7 +203,7 @@ public class GameController : MonoBehaviour {
                 }
 
                 //up
-                if (up)
+                if (up && (GenerateGame.GenerateGameSingle.shape != 3 || (currentSquare.x + currentSquare.y) % 2 == 1))
                 {
                     temp = new Vector2(currentSquare.x, currentSquare.y + 1);
                     if (GenerateGame.GenerateGameSingle.gameBoard[(int)currentSquare.x, (int)currentSquare.y + 1].GetComponent<SpriteRenderer>().color == buttonColor)
@@ -231,7 +232,7 @@ public class GameController : MonoBehaviour {
                 }
 
                 //down
-                if (down)
+                if (down && (GenerateGame.GenerateGameSingle.shape != 3 || (currentSquare.x + currentSquare.y) % 2 == 0))
                 {
                     temp = new Vector2(currentSquare.x, currentSquare.y - 1);
                     if (GenerateGame.GenerateGameSingle.gameBoard[(int)currentSquare.x, (int)currentSquare.y - 1].GetComponent<SpriteRenderer>().color == buttonColor)
@@ -260,7 +261,7 @@ public class GameController : MonoBehaviour {
                 }
 
                 //if hexagon shape
-                if (GenerateGame.GenerateGameSingle.shape == 1)
+                if (GenerateGame.GenerateGameSingle.shape == 6)
                 {
                     //if even x; up right; left up
                     if(currentSquare.x % 2 == 0)
@@ -402,24 +403,40 @@ public class GameController : MonoBehaviour {
 
     void ChangeButtonOptions()
     {
-        GameObject ColorButtonPanel = GameObject.Find("ColorButtonPanel");
         numberActive = 0;
         foreach (GameObject cb in buttons)
         {
             cb.SetActive(true);
             foreach (Player cp in Players)
             {
-                if (cb.GetComponent<SpriteRenderer>().color == cp.CurrentColor)
+                if (cb.GetComponent<Image>().color == cp.CurrentColor)
                 {
                     cb.SetActive(false);
                     break;
                 }
             }
 
-            cb.transform.localPosition = new Vector3(0, ColorButtonPanel.GetComponent<SpriteRenderer>().size.y / 2f - .5f - numberActive, 0);
-            if (cb.activeSelf)
-                numberActive += 1;
+            //cb.transform.localPosition = new Vector3(0,GenerateGame.GenerateGameSingle.ColorButtonPanel.GetComponent<SpriteRenderer>().size.y / 2f - .5f - numberActive, 0);
+            //if (cb.activeSelf)
+            //    numberActive += 1;
         }
     }
 
+    public void RestartGame()
+    {
+        //GenerateGame.GenerateGameSingle.StartGameCondition(10, 10, 7, 4, 6);
+        //Players = new List<Player>();
+        GenerateGame.GenerateGameSingle.RestartGame();
+        turn = Random.Range(0, GenerateGame.GenerateGameSingle.numPlayers);
+        foreach (GameObject cb in buttons)
+        {
+            cb.SetActive(true);
+        }
+    }
+
+    public void NewGame()
+    {
+        turn = -1;
+        GenerateGame.GenerateGameSingle.NewGame();
+    }
 }

@@ -1,6 +1,6 @@
 fileFormatVersion: 2
 guid: 79a68c282a671254ea3fb55658746bdf
-timeCreated: 1532297450
+timeCreated: 1532507196
 licenseType: Free
 MonoImporter:
   serializedVersion: 2
@@ -9,6 +9,11 @@ MonoImporter:
       type: 2}
   - HexagonPrefab: {fileID: 1459531677215044, guid: da77ffcf64c40e74a8f6a63a971ed2dc,
       type: 2}
+  - TriabglePrefab: {fileID: 1076739617933362, guid: 4f28dd0b436531943abf5fd9ab447306,
+      type: 2}
+  - ButtonSquarePrefab: {fileID: 1575736795327688, guid: 97faba2f0690aa94e903ba63ed09a672,
+      type: 2}
+  - ColorButtonPanel: {instanceID: 0}
   executionOrder: 100
   icon: {instanceID: 0}
   userData: 
