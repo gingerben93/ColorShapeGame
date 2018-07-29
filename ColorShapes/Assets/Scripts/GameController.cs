@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Networking;
 using UnityEngine.UI;
 
 public class GameController : MonoBehaviour {
@@ -28,13 +29,14 @@ public class GameController : MonoBehaviour {
         }
     }
 
-    public void AddPlayer()
+    public void AddPlayer(Vector2 Start)
     {
         HashSet<Vector2> pv = new HashSet<Vector2>();
         List<Vector2> pr = new List<Vector2>();
         Queue<Vector2> pq = new Queue<Vector2>();
         Color StartColor = Color.black;
         Player newPlayer = new Player(pv, pr, pq, StartColor);
+        newPlayer.playerReachable.Add(Start);
         Players.Add(newPlayer);
     }
 
@@ -56,7 +58,7 @@ public class GameController : MonoBehaviour {
     // Use this for initialization
     void Start ()
     {
-
+        Players = new List<Player>();
     }
 	
 	// Update is called once per frame
@@ -95,8 +97,9 @@ public class GameController : MonoBehaviour {
         }
     }
 
-    public void ButtonClick(Color buttonColor)
+    public Color ButtonClick(Color buttonColor)
     {
+        print(Players.Count);
         Player CurPlayer = Players[turn];
 
         //make sure another play doesnt have that color
@@ -382,9 +385,6 @@ public class GameController : MonoBehaviour {
                 }
             }
 
-
-
-
             //change color all squares player owns
             foreach (Vector2 vec in CurPlayer.playerVisited)
             {
@@ -399,6 +399,8 @@ public class GameController : MonoBehaviour {
 
             ChangeButtonOptions();
         }
+
+        return buttonColor;
     }
 
     void ChangeButtonOptions()
@@ -426,8 +428,8 @@ public class GameController : MonoBehaviour {
     {
         //GenerateGame.GenerateGameSingle.StartGameCondition(10, 10, 7, 4, 6);
         //Players = new List<Player>();
-        GenerateGame.GenerateGameSingle.RestartGame();
-        turn = Random.Range(0, GenerateGame.GenerateGameSingle.numPlayers);
+        //GenerateGame.GenerateGameSingle.RestartGame();
+        turn = 0;
         foreach (GameObject cb in buttons)
         {
             cb.SetActive(true);
