@@ -7,6 +7,7 @@ using UnityEngine.UI;
 public class GameController : MonoBehaviour {
 
     public List<GameObject> buttons;
+    public GameObject localPlayer;
 
     public List<Player> Players;
     public int numberActive = 0;
@@ -58,7 +59,7 @@ public class GameController : MonoBehaviour {
     // Use this for initialization
     void Start ()
     {
-        Players = new List<Player>();
+        //Players = new List<Player>();
     }
 	
 	// Update is called once per frame
@@ -417,24 +418,18 @@ public class GameController : MonoBehaviour {
                     break;
                 }
             }
-
-            //cb.transform.localPosition = new Vector3(0,GenerateGame.GenerateGameSingle.ColorButtonPanel.GetComponent<SpriteRenderer>().size.y / 2f - .5f - numberActive, 0);
-            //if (cb.activeSelf)
-            //    numberActive += 1;
         }
     }
 
-    public void RestartGame()
-    {
-        //GenerateGame.GenerateGameSingle.StartGameCondition(10, 10, 7, 4, 6);
-        //Players = new List<Player>();
-        //GenerateGame.GenerateGameSingle.RestartGame();
-        turn = 0;
-        foreach (GameObject cb in buttons)
-        {
-            cb.SetActive(true);
-        }
-    }
+    //public void RestartGame()
+    //{
+    //    turn = 0;
+    //    //turns all buttons on
+    //    foreach (GameObject cb in buttons)
+    //    {
+    //        cb.SetActive(true);
+    //    }
+    //}
 
     public void NewGame()
     {

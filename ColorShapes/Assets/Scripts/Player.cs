@@ -44,21 +44,6 @@ public class Player : NetworkBehaviour {
 
    void Start()
     {
-
-        //   GenerateGame.GenerateGameSingle.StartGameCondition(ServerController.ServerControllerSingle, 10, 7, 2, 6);
-        //GenerateGame.GenerateGameSingle.StartGameGeneration();
-        //    if (isLocalPlayer)
-        //    {
-        //        GameObject.Find("NewGameButton").GetComponent<Button>().onClick.AddListener(() => CmdClick());
-        //        Height = GameObject.Find("HeightInputField").GetComponent<InputField>();
-        //        Height.onEndEdit.AddListener(CmdHeight);
-        //    }
-        print("isServer:");
-        print(isServer);
-        print("isLocalPlayer");
-        print(isLocalPlayer);
-        print(gameObject.name);
-
         //find beter way to sync turns
         myTurn = GameController.GameControllerSingle.turn;
         GameController.GameControllerSingle.turn += 1;
@@ -67,8 +52,9 @@ public class Player : NetworkBehaviour {
         {
             //search for player tag to find local player
             tag = ("Player");
-            print("local player assign buttons");
+            GameController.GameControllerSingle.localPlayer = gameObject;
             GameObject.Find("NewGameButton").GetComponent<Button>().onClick.AddListener(() => NewGame());
+            GameObject.Find("RestartGameButton").GetComponent<Button>().onClick.AddListener(() => RestartGame());
             GameObject.Find("StartNewGameButton").GetComponent<Button>().onClick.AddListener(() => StartNewGame());
             GameObject.Find("WidthInputField").GetComponent<InputField>().onEndEdit.AddListener(delegate { ChangeWidth(); });
             GameObject.Find("HeightInputField").GetComponent<InputField>().onEndEdit.AddListener(delegate { ChangeHeight(); });
@@ -239,7 +225,7 @@ public class Player : NetworkBehaviour {
     public void StartNewGame()
     {
         int[] colors;
-        colors = GenerateGame.GenerateGameSingle.StartGameGeneration();
+        colors = GenerateGame.GenerateGameSingle.GetListOfColors();
         //server client sync
         if (isServer)
         {
@@ -248,17 +234,6 @@ public class Player : NetworkBehaviour {
         else 
         {
             CmdStartNewGame(colors);
-        }
-        for(int x = 0; x < GenerateGame.GenerateGameSingle.numPlayers; x++)
-        {
-            if (isServer)
-            {
-                RpcMakePlayers(GameController.GameControllerSingle.Players[x].playerReachable[0]);
-            }
-            else
-            {
-                CmdMakePlayers(GameController.GameControllerSingle.Players[x].playerReachable[0]);
-            }
         }
     }
 
@@ -271,29 +246,9 @@ public class Player : NetworkBehaviour {
     [ClientRpc]
     public void RpcStartNewGame(int[] colors)
     {
-        GenerateGame.GenerateGameSingle.StartGameGeneration(colors);
-        //reset buttons
-        GameController.GameControllerSingle.buttons = new List<GameObject>();
-        GameObject[] allPlayers;
-        allPlayers = GameObject.FindGameObjectsWithTag("Player");
-        print(allPlayers.Length);
-
-        //for some reason this object says it is not local player when it is // if(islocalplayer) will return false; should be true
-        foreach(GameObject singlePlayer in allPlayers)
-        {
-            for (int y = 0; y < GenerateGame.GenerateGameSingle.numberColors; y++)
-            {
-                var tempBox = Instantiate(GenerateGame.GenerateGameSingle.ButtonSquarePrefab, GenerateGame.GenerateGameSingle.ColorButtonPanel.transform);
-                tempBox.GetComponent<Image>().color = GenerateGame.GenerateGameSingle.PickColor(y);
-                //set button method to color of button
-                tempBox.GetComponent<Button>().onClick.AddListener(() => singlePlayer.GetComponent<Player>().PlayerButtonClick(tempBox.GetComponent<Image>().color));
-                GameController.GameControllerSingle.buttons.Add(tempBox);
-                //tempBox.GetComponent<SpriteRenderer>().color = PickColor(y);
-                //tempBox.GetComponent<SpriteRenderer>().size = new Vector2(4, 1);
-                ////set position from panel not world
-                //tempBox.transform.localPosition = new Vector3(0, ColorButtonPanel.GetComponent<SpriteRenderer>().size.y / 2f - .5f - y, 0);
-            }
-        }
+        GenerateGame.GenerateGameSingle.DrawShapesForGame(colors);
+        GenerateGame.GenerateGameSingle.StartLocations();
+        GenerateGame.GenerateGameSingle.placeButtons();
     }
 
     [Command]
@@ -308,25 +263,35 @@ public class Player : NetworkBehaviour {
         GameController.GameControllerSingle.AddPlayer(location);
     }
 
+    public void RestartGame()
+    {
+        if (isServer)
+        {
+            NewGame();
+            StartNewGame();
+        }
+        else
+        {
+            NewGame();
+            StartNewGame();
+        }
+    }
+    
     public void PlayerButtonClick(Color color)
     {
         //check if my turn
-        if(myTurn == GameController.GameControllerSingle.turn)
-        {
+        //if(myTurn == GameController.GameControllerSingle.turn)
+        //{
             //server client sync
             if (isServer)
             {
-                print("isLocalPlayer");
-                print(isLocalPlayer);
                 RpcPlayerButtonClick(color);
             }
             else
             {
-                print("isLocalPlayer");
-                print(isLocalPlayer);
                 CmdPlayerButtonClick(color);
             }
-        }
+        //}
     }
 
     [Command]

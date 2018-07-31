@@ -58,90 +58,11 @@ public class GenerateGame : NetworkBehaviour
         StartGamePanel.blocksRaycasts = false;
 
         numPlayers = 2;
-
-        // width , height, number colors, number players, number of sides on shape
-        //StartGameCondition(10, 10, 7, 2, 6);
-        //StartGameGeneration();
-
-
-
-        if (isServer)
-        {
-            //StartGameCondition(ServerController.ServerControllerSingle.width, ServerController.ServerControllerSingle.height, ServerController.ServerControllerSingle.numberColors, ServerController.ServerControllerSingle.numPlayers, ServerController.ServerControllerSingle.shape);
-
-            //StartGameCondition(10, 10, 7, 2, 6);
-            //clear if this is game reset
-            //StartGameGeneration();
-        }
-        else
-        {
-            //CmdStartGameCondition();
-            //clear if this is game reset
-        }
-
     }
-
-    public void StartGameCondition(int w, int h, int numCol, int numPlay, int s)
-    {
-        //start variables
-        width = w;
-        height = h;
-        numberColors = numCol;
-        numPlayers = numPlay;
-        shape = s;
-
-    }
-
-    //[Command]
-    //public void CmdStartGameCondition()
-    //{
-    //    RpcStartGameCondition(width, height, numberColors, numPlayers, shape);
-    //}
-
-    //// width , height, number colors, number players, number of sides on shape
-    //[ClientRpc]
-    //public void RpcStartGameCondition(int w, int h, int numCol, int numPlay, int s)
-    //{
-    //    //start variables
-    //    width = w;
-    //    height = h;
-    //    numberColors = numCol;
-    //    numPlayers = numPlay;
-    //    shape = s;
-    //}
 
     //shouldnt make copies in two places
-    public int[] StartGameGeneration()
+    public int[] GetListOfColors()
     {
-        GameObject shapePrefab;
-        GameController.GameControllerSingle.turn = 0;
-        GameController.GameControllerSingle.Players = new List<GameController.Player>();
-
-        EndGamePanel.alpha = 1;
-        EndGamePanel.interactable = true;
-        EndGamePanel.blocksRaycasts = true;
-        StartGamePanel.alpha = 0;
-        StartGamePanel.interactable = false;
-        StartGamePanel.blocksRaycasts = false;
-
-        //sets shape prefab
-        if (shape == 3)
-        {
-            shapePrefab = TriabglePrefab;
-        }
-        else if (shape == 4)
-        {
-            shapePrefab = BoxPrefab;
-        }
-        else if (shape == 6)
-        {
-            shapePrefab = HexagonPrefab;
-        }
-        else
-        {
-            shapePrefab = BoxPrefab;
-        }
-
         gameBoard = new GameObject[width, height];
         Colors = new int[width*height];
         //makes grid; Instantiate color shape
@@ -150,90 +71,21 @@ public class GenerateGame : NetworkBehaviour
             for (int y = 0; y < height; y++)
             {
                 int color = Random.Range(0, numberColors);
+                //cant pass multidimentional arrays with UNET
                 Colors[x + y*height] = color;
-
-                var tempBox = Instantiate(shapePrefab, transform);
-                gameBoard[x, y] = tempBox;
-                tempBox.GetComponent<SpriteRenderer>().color = PickColor(color);
-
-                if (shape == 3)
-                {
-                    //triangle pattern; had to change center of triangle in sprite editor
-                    if ((x + y) % 2 == 1)
-                    {
-                        tempBox.transform.localEulerAngles = new Vector3(tempBox.transform.eulerAngles.x, tempBox.transform.eulerAngles.y, 180);
-                        tempBox.transform.localPosition = new Vector3(x * .5f - width / 2, y * .8f - height / 2, 0);
-                    }
-                    else
-                        tempBox.transform.localPosition = new Vector3(x * .5f - width / 2, y * .8f - height / 2, 0);
-                }
-                else if (shape == 4)
-                {
-                    //square
-                    tempBox.transform.localPosition = new Vector3(x - width / 2, y - height / 2, 0);
-                }
-                else if (shape == 6)
-                {
-                    //hexagon pattern
-                    if (x % 2 == 1)
-                        tempBox.transform.localPosition = new Vector3(-15 + x * .8f - width / 2, y * .9f - .25f - (height / 2 * .75f) - 1.5f, 0);
-                    else
-                        tempBox.transform.localPosition = new Vector3(-15 + x * .8f - width / 2, y * .9f + .25f - (height / 2 * .75f) - 1.5f, 0);
-                }
             }
         }
-
-        //reset buttons
-        GameController.GameControllerSingle.buttons = new List<GameObject>();
-
-        //for (int y = 0; y < numberColors; y++)
-        //{
-        //    var tempBox = Instantiate(ButtonSquarePrefab, ColorButtonPanel.transform);
-        //    tempBox.GetComponent<Image>().color = PickColor(y);
-        //    //set button method to color of button
-        //    tempBox.GetComponent<Button>().onClick.AddListener(() => GameController.GameControllerSingle.ButtonClick(tempBox.GetComponent<Image>().color));
-        //    GameController.GameControllerSingle.buttons.Add(tempBox);
-        //    //tempBox.GetComponent<SpriteRenderer>().color = PickColor(y);
-        //    //tempBox.GetComponent<SpriteRenderer>().size = new Vector2(4, 1);
-        //    ////set position from panel not world
-        //    //tempBox.transform.localPosition = new Vector3(0, ColorButtonPanel.GetComponent<SpriteRenderer>().size.y / 2f - .5f - y, 0);
-        //}
-
-        //GameController.GameControllerSingle.turn = 0;
-        //print("players");
-        StartConitions();
-
-        //if (isServer)
-        //{
-        //    RpcStartGameGeneration();
-        //    for (int x = 0; x < width; x++)
-        //    {
-        //        for (int y = 0; y < height; y++)
-        //        {
-        //            RpcChangeColor(x, y, Colors[x, y]);
-        //        }
-        //    }
-        //}
-        //else
-        //{
-        //    CmdStartGameGeneration();
-        //    for (int x = 0; x < width; x++)
-        //    {
-        //        for (int y = 0; y < height; y++)
-        //        {
-        //            CmdChangeColor(x, y, Colors[x, y]);
-        //        }
-        //    }
-        //}
-
+        
+        //StartConitions();
         return Colors;
     }
 
-    public void StartGameGeneration(int[] newColors)
+    public void DrawShapesForGame(int[] newColors)
     {
+        //need to set colors for StartLocations method
+        Colors = newColors;
         GameObject shapePrefab;
         GameController.GameControllerSingle.turn = 0;
-        GameController.GameControllerSingle.Players = new List<GameController.Player>();
 
         EndGamePanel.alpha = 1;
         EndGamePanel.interactable = true;
@@ -268,12 +120,12 @@ public class GenerateGame : NetworkBehaviour
             {
                 var tempBox = Instantiate(shapePrefab, transform);
                 gameBoard[x, y] = tempBox;
-                //print(newColors[x, y]);
                 tempBox.GetComponent<SpriteRenderer>().color = PickColor(newColors[x+y*height]);
 
+                //pattern to place based pn shape
                 if (shape == 3)
                 {
-                    //triangle pattern; had to change center of triangle in sprite editor
+                    //triangle pattern; had to change center of triangle in sprite editor; 1-(4/.5 = 3/x) = .625
                     if ((x + y) % 2 == 1)
                     {
                         tempBox.transform.localEulerAngles = new Vector3(tempBox.transform.eulerAngles.x, tempBox.transform.eulerAngles.y, 180);
@@ -297,158 +149,14 @@ public class GenerateGame : NetworkBehaviour
                 }
             }
         }
-
-        //reset buttons
-        //GameController.GameControllerSingle.buttons = new List<GameObject>();
-
-        //for (int y = 0; y < numberColors; y++)
-        //{
-        //    var tempBox = Instantiate(ButtonSquarePrefab, ColorButtonPanel.transform);
-        //    tempBox.GetComponent<Image>().color = PickColor(y);
-        //    //set button method to color of button
-        //    tempBox.GetComponent<Button>().onClick.AddListener(() => GameController.GameControllerSingle.ButtonClick(tempBox.GetComponent<Image>().color));
-        //    GameController.GameControllerSingle.buttons.Add(tempBox);
-        //    //tempBox.GetComponent<SpriteRenderer>().color = PickColor(y);
-        //    //tempBox.GetComponent<SpriteRenderer>().size = new Vector2(4, 1);
-        //    ////set position from panel not world
-        //    //tempBox.transform.localPosition = new Vector3(0, ColorButtonPanel.GetComponent<SpriteRenderer>().size.y / 2f - .5f - y, 0);
-        //}
-
-        //GameController.GameControllerSingle.turn = 0;
-        //StartConitions();
-
-        //if (isServer)
-        //{
-        //    RpcStartGameGeneration();
-        //    for (int x = 0; x < width; x++)
-        //    {
-        //        for (int y = 0; y < height; y++)
-        //        {
-        //            RpcChangeColor(x, y, Colors[x, y]);
-        //        }
-        //    }
-        //}
-        //else
-        //{
-        //    CmdStartGameGeneration();
-        //    for (int x = 0; x < width; x++)
-        //    {
-        //        for (int y = 0; y < height; y++)
-        //        {
-        //            CmdChangeColor(x, y, Colors[x, y]);
-        //        }
-        //    }
-        //}
     }
-
-    //[Command]
-    //public void CmdStartGameGeneration()
-    //{
-    //    RpcStartGameGeneration();
-    //}
-
-
-    //[ClientRpc]
-    //public void RpcStartGameGeneration()
-    //{
-    //    GameObject shapePrefab;
-    //    GameController.GameControllerSingle.turn = 0;
-
-    //    EndGamePanel.alpha = 1;
-    //    EndGamePanel.interactable = true;
-    //    EndGamePanel.blocksRaycasts = true;
-    //    StartGamePanel.alpha = 0;
-    //    StartGamePanel.interactable = false;
-    //    StartGamePanel.blocksRaycasts = false;
-
-    //    //sets shape prefab
-    //    if (shape == 3)
-    //    {
-    //        shapePrefab = TriabglePrefab;
-    //    }
-    //    else if (shape == 4)
-    //    {
-    //        shapePrefab = BoxPrefab;
-    //    }
-    //    else if (shape == 6)
-    //    {
-    //        shapePrefab = HexagonPrefab;
-    //    }
-    //    else
-    //    {
-    //        shapePrefab = BoxPrefab;
-    //    }
-
-    //    gameBoard = new GameObject[width, height];
-    //    //makes grid; Instantiate color shape
-    //    for (int x = 0; x < width; x++)
-    //    {
-    //        for (int y = 0; y < height; y++)
-    //        {
-    //            var tempBox = Instantiate(shapePrefab, transform);
-    //            gameBoard[x, y] = tempBox;
-    //            //tempBox.GetComponent<SpriteRenderer>().color = PickColor(color);
-
-    //            if (shape == 3)
-    //            {
-    //                //triangle pattern; had to change center of triangle in sprite editor
-    //                if ((x + y) % 2 == 1)
-    //                {
-    //                    tempBox.transform.localEulerAngles = new Vector3(tempBox.transform.eulerAngles.x, tempBox.transform.eulerAngles.y, 180);
-    //                    tempBox.transform.localPosition = new Vector3(x * .5f - width / 2, y * .8f - height / 2, 0);
-    //                }
-    //                else
-    //                    tempBox.transform.localPosition = new Vector3(x * .5f - width / 2, y * .8f - height / 2, 0);
-    //            }
-    //            else if (shape == 4)
-    //            {
-    //                //square
-    //                tempBox.transform.localPosition = new Vector3(x - width / 2, y - height / 2, 0);
-    //            }
-    //            else if (shape == 6)
-    //            {
-    //                //hexagon pattern
-    //                if (x % 2 == 1)
-    //                    tempBox.transform.localPosition = new Vector3(x * .8f - width / 2, y * .9f - .25f - (height / 2 * .75f) - 1.5f, 0);
-    //                else
-    //                    tempBox.transform.localPosition = new Vector3(x * .8f - width / 2, y * .9f + .25f - (height / 2 * .75f) - 1.5f, 0);
-    //            }
-    //        }
-    //    }
-
-    //    //reset buttons
-    //    GameController.GameControllerSingle.buttons = new List<GameObject>();
-
-    //    for (int y = 0; y < numberColors; y++)
-    //    {
-    //        var tempBox = Instantiate(ButtonSquarePrefab, ColorButtonPanel.transform);
-    //        tempBox.GetComponent<Image>().color = PickColor(y);
-    //        //set button method to color of button
-    //        tempBox.GetComponent<Button>().onClick.AddListener(() => GameController.GameControllerSingle.ButtonClick(tempBox.GetComponent<Image>().color));
-    //        GameController.GameControllerSingle.buttons.Add(tempBox);
-    //        //tempBox.GetComponent<SpriteRenderer>().color = PickColor(y);
-    //        //tempBox.GetComponent<SpriteRenderer>().size = new Vector2(4, 1);
-    //        ////set position from panel not world
-    //        //tempBox.transform.localPosition = new Vector3(0, ColorButtonPanel.GetComponent<SpriteRenderer>().size.y / 2f - .5f - y, 0);
-    //    }
-    //}
-
-    ////[Command]
-    ////private void CmdChangeColor(int x, int y, int c)
-    ////{
-    ////    RpcChangeColor(x, y, c);
-    ////}
-
-    ////[ClientRpc]
-    ////private void RpcChangeColor(int x, int y, int c)
-    ////{
-    ////    gameBoard[x, y].GetComponent<SpriteRenderer>().color = PickColor(c);
-    ////}
-
-    private void StartConitions()
+    
+    public void StartLocations()
     {
-        startLocations = new List<Vector2>();
+        //need to reset player variables
+        GameController.GameControllerSingle.Players = new List<GameController.Player>();
 
+        startLocations = new List<Vector2>();
         //possible player starts
         startLocations.Add(new Vector2(0, 0));
         startLocations.Add(new Vector2(width - 1, height - 1));
@@ -457,161 +165,50 @@ public class GenerateGame : NetworkBehaviour
 
         for (int x = 0; x < numPlayers; x++)
         {
-            int ranStart = Random.Range(0, startLocations.Count);
+            //int ranStart = Random.Range(0, startLocations.Count);
 
-            GameController.GameControllerSingle.AddPlayer(startLocations[ranStart]);
-            gameBoard[(int)startLocations[ranStart].x, (int)startLocations[ranStart].y].GetComponent<SpriteRenderer>().color = Color.black;
-            Colors[(int)startLocations[ranStart].x + (int)startLocations[ranStart].y*height] = -1;
-            //stop player from being in same spot
-            //if (isServer)
-            //{
-            //    RpcStartConitions(startLocations[ranStart]);
-            //}
-            //else
-            //{
-            //    CmdStartConitions(startLocations[ranStart]);
-            //}
-
-            startLocations.RemoveAt(ranStart);
+            GameController.GameControllerSingle.AddPlayer(startLocations[x]);
+            gameBoard[(int)startLocations[x].x, (int)startLocations[x].y].GetComponent<SpriteRenderer>().color = Color.black;
+            Colors[(int)startLocations[x].x + (int)startLocations[x].y*height] = -1;
+            //startLocations.RemoveAt(ranStart);
         }
-        //print(GameController.GameControllerSingle.Players.Count);
     }
 
-    [Command]
-    private void CmdStartConitions(Vector2 location)
+    public void placeButtons()
     {
-        RpcStartConitions(location);
+        //reset buttons
+        GameController.GameControllerSingle.buttons = new List<GameObject>();
+
+        for (int y = 0; y < numberColors; y++)
+        {
+            var tempBox = Instantiate(ButtonSquarePrefab, ColorButtonPanel.transform);
+            tempBox.GetComponent<Image>().color = PickColor(y);
+            //set button method to color of button of the local player
+            tempBox.GetComponent<Button>().onClick.AddListener(() => GameController.GameControllerSingle.localPlayer.GetComponent<Player>().PlayerButtonClick(tempBox.GetComponent<Image>().color));
+            GameController.GameControllerSingle.buttons.Add(tempBox);
+        }
+        
     }
 
-    [ClientRpc]
-    private void RpcStartConitions(Vector2 location)
-    {
-        GameController.GameControllerSingle.AddPlayer(location);
-    }
-
-    //public void ClientGetGame(GameObject [,] ServerGame)
-    //{
-    //    GameObject shapePrefab;
-    //    GameController.GameControllerSingle.turn = 0;
-
-    //    EndGamePanel.alpha = 1;
-    //    EndGamePanel.interactable = true;
-    //    EndGamePanel.blocksRaycasts = true;
-    //    StartGamePanel.alpha = 0;
-    //    StartGamePanel.interactable = false;
-    //    StartGamePanel.blocksRaycasts = false;
-
-    //    //sets shape prefab
-    //    if (shape == 3)
-    //    {
-    //        shapePrefab = TriabglePrefab;
-    //    }
-    //    else if (shape == 4)
-    //    {
-    //        shapePrefab = BoxPrefab;
-    //    }
-    //    else if (shape == 6)
-    //    {
-    //        shapePrefab = HexagonPrefab;
-    //    }
-    //    else
-    //    {
-    //        shapePrefab = BoxPrefab;
-    //    }
-
-    //    gameBoard = new GameObject[width, height];
-    //    //makes grid; Instantiate color shape
-    //    for (int x = 0; x < width; x++)
-    //    {
-    //        for (int y = 0; y < height; y++)
-    //        {
-    //            var tempBox = Instantiate(shapePrefab, transform);
-    //            gameBoard[x, y] = tempBox;
-    //            tempBox.GetComponent<SpriteRenderer>().color = ServerGame[x, y].GetComponent<SpriteRenderer>().color;
-    //            tempBox.transform.localEulerAngles = ServerGame[x, y].transform.localEulerAngles;
-    //            tempBox.transform.localPosition = ServerGame[x, y].transform.localPosition;
-    //        }
-    //    }
-
-    //    //reset buttons
-    //    GameController.GameControllerSingle.buttons = new List<GameObject>();
-
-    //    for (int y = 0; y < numberColors; y++)
-    //    {
-    //        var tempBox = Instantiate(ButtonSquarePrefab, ColorButtonPanel.transform);
-    //        tempBox.GetComponent<Image>().color = PickColor(y);
-    //        //set button method to color of button
-    //        tempBox.GetComponent<Button>().onClick.AddListener(() => GameController.GameControllerSingle.ButtonClick(tempBox.GetComponent<Image>().color));
-    //        GameController.GameControllerSingle.buttons.Add(tempBox);
-    //        //tempBox.GetComponent<SpriteRenderer>().color = PickColor(y);
-    //        //tempBox.GetComponent<SpriteRenderer>().size = new Vector2(4, 1);
-    //        ////set position from panel not world
-    //        //tempBox.transform.localPosition = new Vector3(0, ColorButtonPanel.GetComponent<SpriteRenderer>().size.y / 2f - .5f - y, 0);
-    //    }
-    //}
-
-    //public void RestartGame()
+    //public void RestartGame(int[] newColors)
     //{
     //    for (int x = 0; x < width; x++)
     //    {
     //        for (int y = 0; y < height; y++)
     //        {
-    //            int color = Random.Range(0, numberColors);
-    //            gameBoard[x,y].GetComponent<SpriteRenderer>().color = PickColor(color);
+    //            gameBoard[x, y].GetComponent<SpriteRenderer>().color = PickColor(newColors[x + y * height]);
     //        }
     //    }
-    //    StartConitions();
-
-    //    ////server client sync
-    //    //if (isServer)
-    //    //{
-    //    //    RpcRestartGame(gameBoard);
-    //    //}
-    //    //else
-    //    //{
-    //    //    CmdRestartGame(gameBoard);
-    //    //}
-    //}
-
-    //[Command]
-    //private void CmdRestartGame(GameObject [,] board)
-    //{
-    //    RpcRestartGame(board);
-    //}
-
-    //[ClientRpc]
-    //private void RpcRestartGame(GameObject[,] board)
-    //{
-    //    for (int x = 0; x < width; x++)
-    //    {
-    //        for (int y = 0; y < height; y++)
-    //        {
-    //            //int color = Random.Range(0, numberColors);
-    //            gameBoard[x, y].GetComponent<SpriteRenderer>().color = board[x, y].GetComponent<SpriteRenderer>().color;
-    //        }
-    //    }
-    //    StartConitions();
     //}
 
     public void NewGame()
     {
-        ////server client sync
-        //if (isServer)
-        //{
-        //    RpcNewGame();
-        //}
-        //else
-        //{
-        //    CmdNewGame();
-        //}
-
         //remove all old shapes
         foreach (Transform child in GameObject.Find("Floor").transform)
         {
             Destroy(child.gameObject);
         }
 
-
         //remove all old button colors
         foreach (Transform button in ColorButtonPanel.transform)
         {
@@ -628,185 +225,6 @@ public class GenerateGame : NetworkBehaviour
         StartGamePanel.alpha = 1;
         StartGamePanel.interactable = true;
         StartGamePanel.blocksRaycasts = true;
-    }
-
-    [Command]
-    public void CmdNewGame()
-    {
-        RpcNewGame();
-    }
-
-    [ClientRpc]
-    public void RpcNewGame()
-    {
-        //remove all old shapes
-        foreach(Transform child in GameObject.Find("Floor").transform)
-        {
-            Destroy(child.gameObject);
-        }
-        
-
-        //remove all old button colors
-        foreach (Transform button in ColorButtonPanel.transform)
-        {
-            Destroy(button.gameObject);
-        }
-
-        //stop reading inputs
-        GameController.GameControllerSingle.turn = -1;
-
-        //panel options after newgame button click
-        EndGamePanel.alpha = 0;
-        EndGamePanel.interactable = false;
-        EndGamePanel.blocksRaycasts = false;
-        StartGamePanel.alpha = 1;
-        StartGamePanel.interactable = true;
-        StartGamePanel.blocksRaycasts = true;
-    }
-
-    public void ChangeWidth()
-    {
-        int newWidth;
-        bool temp = int.TryParse(GameObject.Find("WidthInputField").GetComponent<InputField>().textComponent.text, out newWidth);
-        if (temp)
-        {
-            width = newWidth;
-        }
-
-        //server client sync
-        if (isServer)
-        {
-            RpcChangeWidth(width);
-        }
-        else
-        {
-            CmdChangeWidth(width);
-        }
-    }
-
-    [Command]
-    private void CmdChangeWidth(int w)
-    {
-        RpcChangeWidth(w);
-    }
-
-    [ClientRpc]
-    private void RpcChangeWidth(int w)
-    {
-        width = w;
-        //GameObject.Find("WidthInputField").GetComponent<InputField>().textComponent.text = width.ToString();
-    }
-
-
-    public void ChangeHeight()
-    {
-        int newHeight;
-        bool temp = int.TryParse(GameObject.Find("HeightInputField").GetComponent<InputField>().textComponent.text, out newHeight);
-        if (temp)
-        {
-            height = newHeight;
-        }
-
-        //server client sync
-        if (isServer)
-        {
-            RpcChangeHeight(height);
-        }
-        else
-        {
-            CmdChangeHeight(height);
-        }
-    }
-
-    [Command]
-    private void CmdChangeHeight(int h)
-    {
-        RpcChangeWidth(h);
-    }
-
-    [ClientRpc]
-    private void RpcChangeHeight(int h)
-    {
-        height = h;
-        //GameObject.Find("WidthInputField").GetComponent<InputField>().textComponent.text = width.ToString();
-    }
-
-    public void ChangeNumberColors()
-    {
-        int numColors;
-        bool temp = int.TryParse(GameObject.Find("ColorInputField").GetComponent<InputField>().textComponent.text, out numColors);
-        if (temp)
-        {
-            numberColors = numColors;
-        }
-
-        //server client sync
-        if (isServer)
-        {
-            RpcChangeNumberColors(numberColors);
-        }
-        else
-        {
-            CmdChangeNumberColors(numberColors);
-        }
-    }
-
-    [Command]
-    private void CmdChangeNumberColors(int num)
-    {
-        RpcChangeNumberColors(num);
-    }
-
-    [ClientRpc]
-    private void RpcChangeNumberColors(int num)
-    {
-        numberColors = num;
-    }
-
-    public void ChangeShape()
-    {
-        var lableString = GameObject.Find("ShapeDropdown").GetComponent<Dropdown>().value;
-
-        //order object are in the dropdown menu
-        if (lableString == 0)
-        {
-            shape = 3;
-        }
-        else if (lableString == 1)
-        {
-            shape = 3;
-        }
-        else if (lableString == 2)
-        {
-            shape = 4;
-        }
-        else if (lableString == 3)
-        {
-            shape = 6;
-        }
-
-        ////server client sync
-        //if (isServer)
-        //{
-        //    RpcChangeShape(shape);
-        //}
-        //else
-        //{
-        //    CmdChangeShape(shape);
-        //}
-
-    }
-
-    [Command]
-    private void CmdChangeShape(int s)
-    {
-        RpcChangeShape(s);
-    }
-
-    [ClientRpc]
-    private void RpcChangeShape(int s)
-    {
-        shape = s;
     }
 
     public Color PickColor(int color)
@@ -831,5 +249,4 @@ public class GenerateGame : NetworkBehaviour
                 return Color.black;
         }
     }
-
 }
