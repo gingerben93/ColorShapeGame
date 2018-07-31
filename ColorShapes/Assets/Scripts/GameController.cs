@@ -99,7 +99,7 @@ public class GameController : MonoBehaviour {
 
     public Color ButtonClick(Color buttonColor)
     {
-        print(Players.Count);
+        //print(Players.Count);
         Player CurPlayer = Players[turn];
 
         //make sure another play doesnt have that color

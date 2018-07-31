@@ -110,6 +110,7 @@ public class GenerateGame : NetworkBehaviour
     //    shape = s;
     //}
 
+    //shouldnt make copies in two places
     public int[] StartGameGeneration()
     {
         GameObject shapePrefab;
@@ -175,9 +176,9 @@ public class GenerateGame : NetworkBehaviour
                 {
                     //hexagon pattern
                     if (x % 2 == 1)
-                        tempBox.transform.localPosition = new Vector3(x * .8f - width / 2, y * .9f - .25f - (height / 2 * .75f) - 1.5f, 0);
+                        tempBox.transform.localPosition = new Vector3(-15 + x * .8f - width / 2, y * .9f - .25f - (height / 2 * .75f) - 1.5f, 0);
                     else
-                        tempBox.transform.localPosition = new Vector3(x * .8f - width / 2, y * .9f + .25f - (height / 2 * .75f) - 1.5f, 0);
+                        tempBox.transform.localPosition = new Vector3(-15 + x * .8f - width / 2, y * .9f + .25f - (height / 2 * .75f) - 1.5f, 0);
                 }
             }
         }
@@ -199,7 +200,7 @@ public class GenerateGame : NetworkBehaviour
         //}
 
         //GameController.GameControllerSingle.turn = 0;
-        print("players");
+        //print("players");
         StartConitions();
 
         //if (isServer)
@@ -297,7 +298,7 @@ public class GenerateGame : NetworkBehaviour
             }
         }
 
-        ////reset buttons
+        //reset buttons
         //GameController.GameControllerSingle.buttons = new List<GameObject>();
 
         //for (int y = 0; y < numberColors; y++)
@@ -473,7 +474,7 @@ public class GenerateGame : NetworkBehaviour
 
             startLocations.RemoveAt(ranStart);
         }
-        print(GameController.GameControllerSingle.Players.Count);
+        //print(GameController.GameControllerSingle.Players.Count);
     }
 
     [Command]

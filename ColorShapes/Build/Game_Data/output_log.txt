@@ -17,19 +17,14 @@ Platform assembly: C:\Users\gingerben\Desktop\everything\unity projects\ColorSha
 Loading C:\Users\gingerben\Desktop\everything\unity projects\ColorShapes\Build\Game_Data\Managed\UnityEngine.Networking.dll into Unity Child Domain
 Platform assembly: C:\Users\gingerben\Desktop\everything\unity projects\ColorShapes\Build\Game_Data\Managed\UnityEngine.Analytics.dll (this message is harmless)
 Loading C:\Users\gingerben\Desktop\everything\unity projects\ColorShapes\Build\Game_Data\Managed\UnityEngine.Analytics.dll into Unity Child Domain
-- Completed reload, in  0.233 seconds
+- Completed reload, in  0.212 seconds
 Platform assembly: C:\Users\gingerben\Desktop\everything\unity projects\ColorShapes\Build\Game_Data\Managed\System.Core.dll (this message is harmless)
 Platform assembly: C:\Users\gingerben\Desktop\everything\unity projects\ColorShapes\Build\Game_Data\Managed\System.dll (this message is harmless)
-desktop: 1366x768 60Hz; virtual: 1366x768 at 0,0
+desktop: 1366x768 60Hz; virtual: 3286x1080 at 0,0
 <RI> Initializing input.
 <RI> Input initialized.
 <RI> Initialized touch support.
-UnloadTime: 1.642122 ms
-Log: connection {1} has been disconnected by timeout; address {::ffff:127.0.0.1:60949} time {43333}, last rec time {41319} rtt {12} timeout {2000}
-ServerDisconnected due to error: Timeout
- 
-(Filename: C:/buildslave/unity/build/artifacts/generated/common/runtime/DebugBindings.gen.cpp Line: 51)
-
+UnloadTime: 1.525527 ms
 Setting up 2 worker threads for Enlighten.
-  Thread -> id: 39b0 -> priority: 1 
-  Thread -> id: 16b4 -> priority: 1 
+  Thread -> id: 2a64 -> priority: 1 
+  Thread -> id: 2030 -> priority: 1 
