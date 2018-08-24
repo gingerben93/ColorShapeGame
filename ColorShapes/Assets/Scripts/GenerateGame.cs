@@ -24,10 +24,16 @@ public class GenerateGame : NetworkBehaviour
     public GameObject TriabglePrefab;
 
     public GameObject ButtonSquarePrefab;
+    public GameObject ScoreTextPrefab;
 
+    public GameObject GamePieceContainer;
     public GameObject ColorButtonPanel;
     CanvasGroup EndGamePanel;
     CanvasGroup StartGamePanel;
+    public GameObject ScorePanel;
+    public Text endGameText;
+
+    Camera mainCamera;
 
     public static GenerateGame GenerateGameSingle;
     //create singleton of class
@@ -46,9 +52,13 @@ public class GenerateGame : NetworkBehaviour
     // Use this for initialization
     void Start()
     {
+        GamePieceContainer = GameObject.Find("Floor");
         ColorButtonPanel = GameObject.Find("ColorButtonPanel");
         EndGamePanel = GameObject.Find("EndGamePanel").GetComponent<CanvasGroup>();
         StartGamePanel = GameObject.Find("StartGamePanel").GetComponent<CanvasGroup>();
+        ScorePanel = GameObject.Find("ScorePanel");
+        endGameText = GameObject.Find("EndGameText").GetComponent<Text>();
+        mainCamera = GameObject.Find("Camera").GetComponent<Camera>();
 
         EndGamePanel.alpha = 1;
         EndGamePanel.interactable = true;
@@ -166,8 +176,11 @@ public class GenerateGame : NetworkBehaviour
         for (int x = 0; x < numPlayers; x++)
         {
             //int ranStart = Random.Range(0, startLocations.Count);
+            var tempScore = Instantiate(ScoreTextPrefab, ScorePanel.transform);
+            
+            tempScore.GetComponent<Text>().text = "Player " + x + " Score: " + (1 / ((float)GenerateGame.GenerateGameSingle.width * (float)GenerateGame.GenerateGameSingle.height) * 100).ToString("00") + "%";
+            GameController.GameControllerSingle.AddPlayer(startLocations[x], tempScore, x);
 
-            GameController.GameControllerSingle.AddPlayer(startLocations[x]);
             gameBoard[(int)startLocations[x].x, (int)startLocations[x].y].GetComponent<SpriteRenderer>().color = Color.black;
             Colors[(int)startLocations[x].x + (int)startLocations[x].y*height] = -1;
             //startLocations.RemoveAt(ranStart);
@@ -204,7 +217,13 @@ public class GenerateGame : NetworkBehaviour
     public void NewGame()
     {
         //remove all old shapes
-        foreach (Transform child in GameObject.Find("Floor").transform)
+        foreach (Transform child in GamePieceContainer.transform)
+        {
+            Destroy(child.gameObject);
+        }
+
+        //remove all old score objects
+        foreach (Transform child in ScorePanel.transform)
         {
             Destroy(child.gameObject);
         }
@@ -214,6 +233,9 @@ public class GenerateGame : NetworkBehaviour
         {
             Destroy(button.gameObject);
         }
+
+        //set text off
+        endGameText.enabled = false;
 
         //stop reading inputs
         GameController.GameControllerSingle.turn = -1;

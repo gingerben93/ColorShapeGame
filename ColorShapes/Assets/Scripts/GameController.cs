@@ -10,34 +10,37 @@ public class GameController : MonoBehaviour {
     public GameObject localPlayer;
 
     public List<Player> Players;
-    public int numberActive = 0;
     public int turn = 0;
 
     //passing by ref not value; cant be a stuct
     public class Player
     {
-        public HashSet<Vector2> playerVisited;
-        public List<Vector2> playerReachable;
-        public Queue<Vector2> playerQ;
+        public HashSet<Vector2> playerEdge;
+        public HashSet<Vector2> playerReachable;
+        public HashSet<Vector2> playerNotEdge;
         public Color CurrentColor;
+        public GameObject ScoreObj;
+        public int turnOrder;
 
-        public Player(HashSet<Vector2> pv, List<Vector2> pr, Queue<Vector2> pq, Color cc)
+        public Player(HashSet<Vector2> pe, HashSet<Vector2> pr, HashSet<Vector2> pne, Color cc, GameObject so, int t)
         {
-            playerVisited = pv;
+            playerEdge = pe;
             playerReachable = pr;
-            playerQ = pq;
+            playerNotEdge = pne;
             CurrentColor = cc;
+            ScoreObj = so;
+            turnOrder = t;
         }
     }
 
-    public void AddPlayer(Vector2 Start)
+    public void AddPlayer(Vector2 Start, GameObject so, int t)
     {
-        HashSet<Vector2> pv = new HashSet<Vector2>();
-        List<Vector2> pr = new List<Vector2>();
-        Queue<Vector2> pq = new Queue<Vector2>();
+        HashSet<Vector2> pe = new HashSet<Vector2>();
+        HashSet<Vector2> pr = new HashSet<Vector2>();
+        HashSet<Vector2> pne = new HashSet<Vector2>();
         Color StartColor = Color.black;
-        Player newPlayer = new Player(pv, pr, pq, StartColor);
-        newPlayer.playerReachable.Add(Start);
+        Player newPlayer = new Player(pe, pr, pne, StartColor, so, t);
+        newPlayer.playerEdge.Add(Start);
         Players.Add(newPlayer);
     }
 
@@ -65,45 +68,56 @@ public class GameController : MonoBehaviour {
 	// Update is called once per frame
 	void Update () {
 
-        if(turn != -1)
+    }
+
+    public void Neighbor(int xOffSet, int yOffSet, ref int tempCountSides, ref int TotalAmountOneColor, Color buttonColor, Vector2 currentSquare, ref Queue<Vector2> pq, ref HashSet<Vector2> playerEdge, ref HashSet<Vector2> playerReachable)
+    {
+        Vector2 temp;
+        temp = new Vector2(currentSquare.x + xOffSet, currentSquare.y + yOffSet);
+        //color correct
+        if (playerEdge.Contains(temp))
         {
-            //if (Input.GetKeyDown(KeyCode.Alpha1))
-            //{
-            //    ButtonClick(Color.red, Players[turn]);
-            //}
-            //if (Input.GetKeyDown(KeyCode.Alpha2))
-            //{
-            //    ButtonClick(Color.yellow, Players[turn]);
-            //}
-            //if (Input.GetKeyDown(KeyCode.Alpha3))
-            //{
-            //    ButtonClick(Color.green, Players[turn]);
-            //}
-            //if (Input.GetKeyDown(KeyCode.Alpha4))
-            //{
-            //    ButtonClick(Color.cyan, Players[turn]);
-            //}
-            //if (Input.GetKeyDown(KeyCode.Alpha5))
-            //{
-            //    ButtonClick(Color.blue, Players[turn]);
-            //}
-            //if (Input.GetKeyDown(KeyCode.Alpha6))
-            //{
-            //    ButtonClick(Color.magenta, Players[turn]);
-            //}
-            //if (Input.GetKeyDown(KeyCode.Alpha7))
-            //{
-            //    ButtonClick(Color.white, Players[turn]);
-            //}
+            tempCountSides += 1;
+            //do nothing if visited already 
+        }
+        else if (GenerateGame.GenerateGameSingle.gameBoard[(int)currentSquare.x + xOffSet, (int)currentSquare.y + yOffSet].GetComponent<SpriteRenderer>().color == buttonColor)
+        {
+            //if not in visited then put there
+            bool visit = true;
+            foreach (Player player in Players)
+            {
+                if (player.playerEdge.Contains(temp))
+                {
+                    visit = false;
+                    break;
+                }
+            }
+            if (visit)
+            {
+                TotalAmountOneColor += 1;
+                pq.Enqueue(temp);
+                playerEdge.Add(temp);
+                playerReachable.Remove(temp);
+            }
+
+        }
+        //if color not correct add to reachable 
+        else if (!playerReachable.Contains(temp))
+        {
+            playerReachable.Add(temp);
         }
     }
 
-    public Color ButtonClick(Color buttonColor)
+    public void ButtonClick(Color buttonColor)
     {
-        //print(Players.Count);
+        if (turn == -1)
+            return;
         Player CurPlayer = Players[turn];
+        Queue<Vector2> pq = new Queue<Vector2>();
+        //Player CurPlayer = new Player(Players[turn].playerVisited, Players[turn].playerReachable, Players[turn].playerQ, Players[turn].CurrentColor, Players[turn].ScoreObj, Players[turn].turnOrder);
 
-        //make sure another play doesnt have that color
+
+        //make sure another play doesnt have that color; kind of useless becuase buttons get turned off
         bool colorPickValid = true;
         foreach(Player aPlayer in Players)
         {
@@ -115,298 +129,427 @@ public class GameController : MonoBehaviour {
         }
         if (colorPickValid)
         {
-            List<Vector2> tempReach = new List<Vector2>();
-
-            //check all reachable squares for correct color
-            foreach (Vector2 vec in CurPlayer.playerReachable)
-            {
-                //or black for first square
-                if (GenerateGame.GenerateGameSingle.gameBoard[(int)vec.x, (int)vec.y].GetComponent<SpriteRenderer>().color == buttonColor || GenerateGame.GenerateGameSingle.gameBoard[(int)vec.x, (int)vec.y].GetComponent<SpriteRenderer>().color == Color.black)
-                {
-                    tempReach.Add(vec);
-                    CurPlayer.playerVisited.Add(vec);
-                }
-            }
-
             //place correct color squares in queue
-            foreach (Vector2 vec in tempReach)
+            foreach (Vector2 vec in CurPlayer.playerEdge)
             {
-                CurPlayer.playerQ.Enqueue(vec);
+                pq.Enqueue(vec);
             }
 
+            int TotalAmountOneColor = 0;
             //check all correct color squares for their neighbors that are same color //dijstras
-            while (CurPlayer.playerQ.Count != 0)
+            while (pq.Count != 0)
             {
-                Vector2 currentSquare = CurPlayer.playerQ.Dequeue();
+                Vector2 currentSquare = pq.Dequeue();
                 Vector2 temp;
+                int tempCountSides = 0;
 
                 bool right = currentSquare.x + 1 < GenerateGame.GenerateGameSingle.width;
                 bool left = currentSquare.x - 1 >= 0;
                 bool up = currentSquare.y + 1 < GenerateGame.GenerateGameSingle.height;
                 bool down = currentSquare.y - 1 >= 0;
 
-                //right
-                if (right)
+                if (GenerateGame.GenerateGameSingle.shape == 3)
                 {
-                    temp = new Vector2(currentSquare.x + 1, currentSquare.y);
-                    //color correct
-                    if (GenerateGame.GenerateGameSingle.gameBoard[(int)currentSquare.x + 1, (int)currentSquare.y].GetComponent<SpriteRenderer>().color == buttonColor)
+                    if (right)
                     {
-                        //if not in visited then put there
-                        bool visit = true;
-                        foreach(Player player in Players)
-                        {
-                            if (player.playerVisited.Contains(temp))
-                            {
-                                visit = false;
-                                break;
-                            }
-                        }
-                        if (visit)
-                        {
-                            CurPlayer.playerQ.Enqueue(temp);
-                            CurPlayer.playerVisited.Add(temp);
-                            CurPlayer.playerReachable.Remove(temp);
-                        }
-
+                        Neighbor(1, 0, ref tempCountSides, ref TotalAmountOneColor, buttonColor, currentSquare, ref pq, ref CurPlayer.playerEdge, ref CurPlayer.playerReachable);
                     }
-                    //if color not correct add to reachable 
-                    else if (!CurPlayer.playerReachable.Contains(temp))
+                    if (left)
                     {
-                        CurPlayer.playerReachable.Add(temp);
+                        Neighbor(-1, 0, ref tempCountSides, ref TotalAmountOneColor, buttonColor, currentSquare, ref pq, ref CurPlayer.playerEdge, ref CurPlayer.playerReachable);
+                    }
+                    if(up && (currentSquare.x + currentSquare.y) % 2 == 1)
+                    {
+                        Neighbor(0, 1, ref tempCountSides, ref TotalAmountOneColor, buttonColor, currentSquare, ref pq, ref CurPlayer.playerEdge, ref CurPlayer.playerReachable);
+                    }
+                    if (down && (currentSquare.x + currentSquare.y) % 2 == 0)
+                    {
+                        Neighbor(0, -1, ref tempCountSides, ref TotalAmountOneColor, buttonColor, currentSquare, ref pq, ref CurPlayer.playerEdge, ref CurPlayer.playerReachable);
                     }
                 }
-
-                //left
-                if (left)
+                else if (GenerateGame.GenerateGameSingle.shape == 4)
                 {
-                    temp = new Vector2(currentSquare.x - 1, currentSquare.y);
-                    if (GenerateGame.GenerateGameSingle.gameBoard[(int)currentSquare.x - 1, (int)currentSquare.y].GetComponent<SpriteRenderer>().color == buttonColor)
+                    if (right)
                     {
-                        //if not in visited then put there
-                        bool visit = true;
-                        foreach (Player player in Players)
-                        {
-                            if (player.playerVisited.Contains(temp))
-                            {
-                                visit = false;
-                                break;
-                            }
-                        }
-                        if (visit)
-                        {
-                            CurPlayer.playerQ.Enqueue(temp);
-                            CurPlayer.playerVisited.Add(temp);
-                            CurPlayer.playerReachable.Remove(temp);
-                        }
+                        Neighbor(1, 0, ref tempCountSides, ref TotalAmountOneColor, buttonColor, currentSquare, ref pq, ref CurPlayer.playerEdge, ref CurPlayer.playerReachable);
                     }
-                    else if (!CurPlayer.playerReachable.Contains(temp))
+                    if (left)
                     {
-                        CurPlayer.playerReachable.Add(temp);
+                        Neighbor(-1, 0, ref tempCountSides, ref TotalAmountOneColor, buttonColor, currentSquare, ref pq, ref CurPlayer.playerEdge, ref CurPlayer.playerReachable);
+                    }
+                    if (up)
+                    {
+                        Neighbor(0, 1, ref tempCountSides, ref TotalAmountOneColor, buttonColor, currentSquare, ref pq, ref CurPlayer.playerEdge, ref CurPlayer.playerReachable);
+                    }
+                    if (down)
+                    {
+                        Neighbor(0, -1, ref tempCountSides, ref TotalAmountOneColor, buttonColor, currentSquare, ref pq, ref CurPlayer.playerEdge, ref CurPlayer.playerReachable);
                     }
                 }
-
-                //up
-                if (up && (GenerateGame.GenerateGameSingle.shape != 3 || (currentSquare.x + currentSquare.y) % 2 == 1))
+                else if (GenerateGame.GenerateGameSingle.shape == 6)
                 {
-                    temp = new Vector2(currentSquare.x, currentSquare.y + 1);
-                    if (GenerateGame.GenerateGameSingle.gameBoard[(int)currentSquare.x, (int)currentSquare.y + 1].GetComponent<SpriteRenderer>().color == buttonColor)
+                    if (right)
                     {
-                        //if not in visited then put there
-                        bool visit = true;
-                        foreach (Player player in Players)
-                        {
-                            if (player.playerVisited.Contains(temp))
-                            {
-                                visit = false;
-                                break;
-                            }
-                        }
-                        if (visit)
-                        {
-                            CurPlayer.playerQ.Enqueue(temp);
-                            CurPlayer.playerVisited.Add(temp);
-                            CurPlayer.playerReachable.Remove(temp);
-                        }
+                        Neighbor(1, 0, ref tempCountSides, ref TotalAmountOneColor, buttonColor, currentSquare, ref pq, ref CurPlayer.playerEdge, ref CurPlayer.playerReachable);
                     }
-                    else if (!CurPlayer.playerReachable.Contains(temp))
+                    if (left)
                     {
-                        CurPlayer.playerReachable.Add(temp);
+                        Neighbor(-1, 0, ref tempCountSides, ref TotalAmountOneColor, buttonColor, currentSquare, ref pq, ref CurPlayer.playerEdge, ref CurPlayer.playerReachable);
                     }
-                }
-
-                //down
-                if (down && (GenerateGame.GenerateGameSingle.shape != 3 || (currentSquare.x + currentSquare.y) % 2 == 0))
-                {
-                    temp = new Vector2(currentSquare.x, currentSquare.y - 1);
-                    if (GenerateGame.GenerateGameSingle.gameBoard[(int)currentSquare.x, (int)currentSquare.y - 1].GetComponent<SpriteRenderer>().color == buttonColor)
+                    if (up)
                     {
-                        //if not in visited then put there
-                        bool visit = true;
-                        foreach (Player player in Players)
-                        {
-                            if (player.playerVisited.Contains(temp))
-                            {
-                                visit = false;
-                                break;
-                            }
-                        }
-                        if (visit)
-                        {
-                            CurPlayer.playerQ.Enqueue(temp);
-                            CurPlayer.playerVisited.Add(temp);
-                            CurPlayer.playerReachable.Remove(temp);
-                        }
+                        Neighbor(0, 1, ref tempCountSides, ref TotalAmountOneColor, buttonColor, currentSquare, ref pq, ref CurPlayer.playerEdge, ref CurPlayer.playerReachable);
                     }
-                    else if (!CurPlayer.playerReachable.Contains(temp))
+                    if (down)
                     {
-                        CurPlayer.playerReachable.Add(temp);
+                        Neighbor(0, -1, ref tempCountSides, ref TotalAmountOneColor, buttonColor, currentSquare, ref pq, ref CurPlayer.playerEdge, ref CurPlayer.playerReachable);
                     }
-                }
-
-                //if hexagon shape
-                if (GenerateGame.GenerateGameSingle.shape == 6)
-                {
-                    //if even x; up right; left up
-                    if(currentSquare.x % 2 == 0)
+                    if (currentSquare.x % 2 == 0)
                     {
                         if (up && right)
                         {
-                            temp = new Vector2(currentSquare.x + 1, currentSquare.y + 1);
-                            if (GenerateGame.GenerateGameSingle.gameBoard[(int)currentSquare.x + 1, (int)currentSquare.y + 1].GetComponent<SpriteRenderer>().color == buttonColor)
-                            {
-                                //if not in visited then put there
-                                bool visit = true;
-                                foreach (Player player in Players)
-                                {
-                                    if (player.playerVisited.Contains(temp))
-                                    {
-                                        visit = false;
-                                        break;
-                                    }
-                                }
-                                if (visit)
-                                {
-                                    CurPlayer.playerQ.Enqueue(temp);
-                                    CurPlayer.playerVisited.Add(temp);
-                                    CurPlayer.playerReachable.Remove(temp);
-                                }
-                            }
-                            else if (!CurPlayer.playerReachable.Contains(temp))
-                            {
-                                CurPlayer.playerReachable.Add(temp);
-                            }
+                            Neighbor(1, 1, ref tempCountSides, ref TotalAmountOneColor, buttonColor, currentSquare, ref pq, ref CurPlayer.playerEdge, ref CurPlayer.playerReachable);
                         }
-                        if (left && up)
+                        if (up && left)
                         {
-                            temp = new Vector2(currentSquare.x - 1, currentSquare.y + 1);
-                            if (GenerateGame.GenerateGameSingle.gameBoard[(int)currentSquare.x - 1, (int)currentSquare.y + 1].GetComponent<SpriteRenderer>().color == buttonColor)
-                            {
-                                //if not in visited then put there
-                                bool visit = true;
-                                foreach (Player player in Players)
-                                {
-                                    if (player.playerVisited.Contains(temp))
-                                    {
-                                        visit = false;
-                                        break;
-                                    }
-                                }
-                                if (visit)
-                                {
-                                    CurPlayer.playerQ.Enqueue(temp);
-                                    CurPlayer.playerVisited.Add(temp);
-                                    CurPlayer.playerReachable.Remove(temp);
-                                }
-                            }
-                            else if (!CurPlayer.playerReachable.Contains(temp))
-                            {
-                                CurPlayer.playerReachable.Add(temp);
-                            }
+                            Neighbor(-1, 1, ref tempCountSides, ref TotalAmountOneColor, buttonColor, currentSquare, ref pq, ref CurPlayer.playerEdge, ref CurPlayer.playerReachable);
                         }
                     }
-                    //if odd x; down left; right down
-                    else
+                    else if (currentSquare.x % 2 == 1)
                     {
+                        if (down && right)
+                        {
+                            Neighbor(1, -1, ref tempCountSides, ref TotalAmountOneColor, buttonColor, currentSquare, ref pq, ref CurPlayer.playerEdge, ref CurPlayer.playerReachable);
+                        }
                         if (down && left)
                         {
-                            temp = new Vector2(currentSquare.x - 1, currentSquare.y - 1);
-                            if (GenerateGame.GenerateGameSingle.gameBoard[(int)currentSquare.x - 1, (int)currentSquare.y - 1].GetComponent<SpriteRenderer>().color == buttonColor)
-                            {
-                                //if not in visited then put there
-                                bool visit = true;
-                                foreach (Player player in Players)
-                                {
-                                    if (player.playerVisited.Contains(temp))
-                                    {
-                                        visit = false;
-                                        break;
-                                    }
-                                }
-                                if (visit)
-                                {
-                                    CurPlayer.playerQ.Enqueue(temp);
-                                    CurPlayer.playerVisited.Add(temp);
-                                    CurPlayer.playerReachable.Remove(temp);
-                                }
-                            }
-                            else if (!CurPlayer.playerReachable.Contains(temp))
-                            {
-                                CurPlayer.playerReachable.Add(temp);
-                            }
-                        }
-                        if (right && down)
-                        {
-                            temp = new Vector2(currentSquare.x + 1, currentSquare.y - 1);
-                            if (GenerateGame.GenerateGameSingle.gameBoard[(int)currentSquare.x + 1, (int)currentSquare.y - 1].GetComponent<SpriteRenderer>().color == buttonColor)
-                            {
-                                //if not in visited then put there
-                                bool visit = true;
-                                foreach (Player player in Players)
-                                {
-                                    if (player.playerVisited.Contains(temp))
-                                    {
-                                        visit = false;
-                                        break;
-                                    }
-                                }
-                                if (visit)
-                                {
-                                    CurPlayer.playerQ.Enqueue(temp);
-                                    CurPlayer.playerVisited.Add(temp);
-                                    CurPlayer.playerReachable.Remove(temp);
-                                }
-                            }
-                            else if (!CurPlayer.playerReachable.Contains(temp))
-                            {
-                                CurPlayer.playerReachable.Add(temp);
-                            }
+                            Neighbor(-1, -1, ref tempCountSides, ref TotalAmountOneColor, buttonColor, currentSquare, ref pq, ref CurPlayer.playerEdge, ref CurPlayer.playerReachable);
                         }
                     }
+                }
+
+                ////right
+                //if (right)
+                //{
+                //    temp = new Vector2(currentSquare.x + 1, currentSquare.y);
+                //    //color correct
+                //    if (CurPlayer.playerEdge.Contains(temp))
+                //    {
+                //        tempCountSides += 1;
+                //        //do nothing if visited already 
+                //    }
+                //    else if (GenerateGame.GenerateGameSingle.gameBoard[(int)currentSquare.x + 1, (int)currentSquare.y].GetComponent<SpriteRenderer>().color == buttonColor)
+                //    {
+                //        //if not in visited then put there
+                //        bool visit = true;
+                //        foreach (Player player in Players)
+                //        {
+                //            if (player.playerEdge.Contains(temp))
+                //            {
+                //                visit = false;
+                //                break;
+                //            }
+                //        }
+                //        if (visit)
+                //        {
+                //            TotalAmountOneColor += 1;
+                //            pq.Enqueue(temp);
+                //            CurPlayer.playerEdge.Add(temp);
+                //            CurPlayer.playerReachable.Remove(temp);
+                //        }
+
+                //    }
+                //    //if color not correct add to reachable 
+                //    else if (!CurPlayer.playerReachable.Contains(temp))
+                //    {
+                //        CurPlayer.playerReachable.Add(temp);
+                //    }
+                //}
+
+                ////left
+                //if (left)
+                //{
+                //    temp = new Vector2(currentSquare.x - 1, currentSquare.y);
+                //    if (CurPlayer.playerEdge.Contains(temp))
+                //    {
+                //        tempCountSides += 1;
+                //        //do nothing if visited already 
+                //    }
+                //    else if (GenerateGame.GenerateGameSingle.gameBoard[(int)currentSquare.x - 1, (int)currentSquare.y].GetComponent<SpriteRenderer>().color == buttonColor)
+                //    {
+                //        //if not in visited then put there
+                //        bool visit = true;
+                //        foreach (Player player in Players)
+                //        {
+                //            if (player.playerEdge.Contains(temp))
+                //            {
+                //                visit = false;
+                //                break;
+                //            }
+                //        }
+                //        if (visit)
+                //        {
+                //            TotalAmountOneColor += 1;
+                //            pq.Enqueue(temp);
+                //            CurPlayer.playerEdge.Add(temp);
+                //            CurPlayer.playerReachable.Remove(temp);
+                //        }
+                //    }
+                //    else if (!CurPlayer.playerReachable.Contains(temp))
+                //    {
+                //        CurPlayer.playerReachable.Add(temp);
+                //    }
+                //}
+
+                ////up
+                //if (up && (GenerateGame.GenerateGameSingle.shape != 3 || (currentSquare.x + currentSquare.y) % 2 == 1))
+                //{
+                //    temp = new Vector2(currentSquare.x, currentSquare.y + 1);
+                //    if (CurPlayer.playerEdge.Contains(temp))
+                //    {
+                //        tempCountSides += 1;
+                //        //do nothing if visited already 
+                //    }
+                //    else if (GenerateGame.GenerateGameSingle.gameBoard[(int)currentSquare.x, (int)currentSquare.y + 1].GetComponent<SpriteRenderer>().color == buttonColor)
+                //    {
+                //        //if not in visited then put there
+                //        bool visit = true;
+                //        foreach (Player player in Players)
+                //        {
+                //            if (player.playerEdge.Contains(temp))
+                //            {
+                //                visit = false;
+                //                break;
+                //            }
+                //        }
+                //        if (visit)
+                //        {
+                //            TotalAmountOneColor += 1;
+                //            pq.Enqueue(temp);
+                //            CurPlayer.playerEdge.Add(temp);
+                //            CurPlayer.playerReachable.Remove(temp);
+                //        }
+                //    }
+                //    else if (!CurPlayer.playerReachable.Contains(temp))
+                //    {
+                //        CurPlayer.playerReachable.Add(temp);
+                //    }
+                //}
+
+                ////down
+                //if (down && (GenerateGame.GenerateGameSingle.shape != 3 || (currentSquare.x + currentSquare.y) % 2 == 0))
+                //{
+                //    temp = new Vector2(currentSquare.x, currentSquare.y - 1);
+                //    if (CurPlayer.playerEdge.Contains(temp))
+                //    {
+                //        tempCountSides += 1;
+                //        //do nothing if visited already 
+                //    }
+                //    else if (GenerateGame.GenerateGameSingle.gameBoard[(int)currentSquare.x, (int)currentSquare.y - 1].GetComponent<SpriteRenderer>().color == buttonColor)
+                //    {
+                //        //if not in visited then put there
+                //        bool visit = true;
+                //        foreach (Player player in Players)
+                //        {
+                //            if (player.playerEdge.Contains(temp))
+                //            {
+                //                visit = false;
+                //                break;
+                //            }
+                //        }
+                //        if (visit)
+                //        {
+                //            TotalAmountOneColor += 1;
+                //            pq.Enqueue(temp);
+                //            CurPlayer.playerEdge.Add(temp);
+                //            CurPlayer.playerReachable.Remove(temp);
+                //        }
+                //    }
+                //    else if (!CurPlayer.playerReachable.Contains(temp))
+                //    {
+                //        CurPlayer.playerReachable.Add(temp);
+                //    }
+                //}
+
+
+                ////if hexagon shape
+                //if (GenerateGame.GenerateGameSingle.shape == 6)
+                //{
+                //    //if even x; up right; left up
+                //    if(currentSquare.x % 2 == 0)
+                //    {
+                //        if (up && right)
+                //        {
+                //            temp = new Vector2(currentSquare.x + 1, currentSquare.y + 1);
+
+                //            if (CurPlayer.playerEdge.Contains(temp))
+                //            {
+                //                //do nothing if visited already 
+                //            }
+                //            else if (GenerateGame.GenerateGameSingle.gameBoard[(int)currentSquare.x + 1, (int)currentSquare.y + 1].GetComponent<SpriteRenderer>().color == buttonColor)
+                //            {
+                //                //if not in visited then put there
+                //                bool visit = true;
+                //                foreach (Player player in Players)
+                //                {
+                //                    if (player.playerEdge.Contains(temp))
+                //                    {
+                //                        visit = false;
+                //                        break;
+                //                    }
+                //                }
+                //                if (visit)
+                //                {
+                //                    pq.Enqueue(temp);
+                //                    CurPlayer.playerEdge.Add(temp);
+                //                    CurPlayer.playerReachable.Remove(temp);
+                //                }
+                //            }
+                //            else if (!CurPlayer.playerReachable.Contains(temp))
+                //            {
+                //                CurPlayer.playerReachable.Add(temp);
+                //            }
+                //        }
+                //        if (left && up)
+                //        {
+                //            temp = new Vector2(currentSquare.x - 1, currentSquare.y + 1);
+                //            if (CurPlayer.playerEdge.Contains(temp))
+                //            {
+                //                //do nothing if visited already 
+                //            }
+                //            else if (GenerateGame.GenerateGameSingle.gameBoard[(int)currentSquare.x - 1, (int)currentSquare.y + 1].GetComponent<SpriteRenderer>().color == buttonColor)
+                //            {
+                //                //if not in visited then put there
+                //                bool visit = true;
+                //                foreach (Player player in Players)
+                //                {
+                //                    if (player.playerEdge.Contains(temp))
+                //                    {
+                //                        visit = false;
+                //                        break;
+                //                    }
+                //                }
+                //                if (visit)
+                //                {
+                //                    pq.Enqueue(temp);
+                //                    CurPlayer.playerEdge.Add(temp);
+                //                    CurPlayer.playerReachable.Remove(temp);
+                //                }
+                //            }
+                //            else if (!CurPlayer.playerReachable.Contains(temp))
+                //            {
+                //                CurPlayer.playerReachable.Add(temp);
+                //            }
+                //        }
+                //    }
+                //    //if odd x; down left; right down
+                //    else if(currentSquare.x % 2 == 1)
+                //    {
+                //        if (down && left)
+                //        {
+                //            temp = new Vector2(currentSquare.x - 1, currentSquare.y - 1);
+                //            if (CurPlayer.playerEdge.Contains(temp))
+                //            {
+                //                //do nothing if visited already 
+                //            }
+                //            else if (GenerateGame.GenerateGameSingle.gameBoard[(int)currentSquare.x - 1, (int)currentSquare.y - 1].GetComponent<SpriteRenderer>().color == buttonColor)
+                //            {
+                //                //if not in visited then put there
+                //                bool visit = true;
+                //                foreach (Player player in Players)
+                //                {
+                //                    if (player.playerEdge.Contains(temp))
+                //                    {
+                //                        visit = false;
+                //                        break;
+                //                    }
+                //                }
+                //                if (visit)
+                //                {
+                //                    pq.Enqueue(temp);
+                //                    CurPlayer.playerEdge.Add(temp);
+                //                    CurPlayer.playerReachable.Remove(temp);
+                //                }
+                //            }
+                //            else if (!CurPlayer.playerReachable.Contains(temp))
+                //            {
+                //                CurPlayer.playerReachable.Add(temp);
+                //            }
+                //        }
+                //        if (right && down)
+                //        {
+                //            temp = new Vector2(currentSquare.x + 1, currentSquare.y - 1);
+                //            if (CurPlayer.playerEdge.Contains(temp))
+                //            {
+                //                //do nothing if visited already 
+                //            }
+                //            else if (GenerateGame.GenerateGameSingle.gameBoard[(int)currentSquare.x + 1, (int)currentSquare.y - 1].GetComponent<SpriteRenderer>().color == buttonColor)
+                //            {
+                //                //if not in visited then put there
+                //                bool visit = true;
+                //                foreach (Player player in Players)
+                //                {
+                //                    if (player.playerEdge.Contains(temp))
+                //                    {
+                //                        visit = false;
+                //                        break;
+                //                    }
+                //                }
+                //                if (visit)
+                //                {
+                //                    pq.Enqueue(temp);
+                //                    CurPlayer.playerEdge.Add(temp);
+                //                    CurPlayer.playerReachable.Remove(temp);
+                //                }
+                //            }
+                //            else if (!CurPlayer.playerReachable.Contains(temp))
+                //            {
+                //                CurPlayer.playerReachable.Add(temp);
+                //            }
+                //        }
+                //    }
+                //}
+                if(tempCountSides == GenerateGame.GenerateGameSingle.shape)
+                {
+                    CurPlayer.playerEdge.Remove(currentSquare);
+                    CurPlayer.playerNotEdge.Add(currentSquare);
                 }
             }
 
             //change color all squares player owns
-            foreach (Vector2 vec in CurPlayer.playerVisited)
+            foreach (Vector2 vec in CurPlayer.playerEdge)
+            {
+                GenerateGame.GenerateGameSingle.gameBoard[(int)vec.x, (int)vec.y].GetComponent<SpriteRenderer>().color = buttonColor;
+            }
+            foreach (Vector2 vec in CurPlayer.playerNotEdge)
             {
                 GenerateGame.GenerateGameSingle.gameBoard[(int)vec.x, (int)vec.y].GetComponent<SpriteRenderer>().color = buttonColor;
             }
 
-            //next turn
-            turn += 1;
-            turn = turn % GenerateGame.GenerateGameSingle.numPlayers;
-            //set currPlayer Color
-            CurPlayer.CurrentColor = buttonColor;
+            float tempScore = (CurPlayer.playerEdge.Count + CurPlayer.playerNotEdge.Count) / ((float)GenerateGame.GenerateGameSingle.width * (float)GenerateGame.GenerateGameSingle.height);
+            CurPlayer.ScoreObj.GetComponent<Text>().text = "Player " + turn + " Score: " + (tempScore*100).ToString("00") + "%";
 
-            ChangeButtonOptions();
+            if (tempScore >= .5)
+            {
+                GenerateGame.GenerateGameSingle.endGameText.enabled = true;
+                GenerateGame.GenerateGameSingle.endGameText.text = "Player " + turn + " Wins!";
+                turn = -1;
+            }
+            else
+            {
+                //next turn
+                turn += 1;
+                turn = turn % GenerateGame.GenerateGameSingle.numPlayers;
+                //set currPlayer Color
+                CurPlayer.CurrentColor = buttonColor;
+
+                ChangeButtonOptions();
+            }
         }
-
-        return buttonColor;
     }
 
     void ChangeButtonOptions()
     {
-        numberActive = 0;
         foreach (GameObject cb in buttons)
         {
             cb.SetActive(true);

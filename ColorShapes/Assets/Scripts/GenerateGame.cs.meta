@@ -12,7 +12,10 @@ MonoImporter:
       type: 2}
   - ButtonSquarePrefab: {fileID: 1575736795327688, guid: fc0ecfda36d958047b42afafe1d917a6,
       type: 2}
+  - ScoreTextPrefab: {fileID: 1697762491784874, guid: b88248a5f3ac7a44192e0d1e19de512b,
+      type: 2}
   - ColorButtonPanel: {instanceID: 0}
+  - ScorePanel: {instanceID: 0}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 

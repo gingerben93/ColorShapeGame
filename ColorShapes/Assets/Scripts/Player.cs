@@ -251,18 +251,6 @@ public class Player : NetworkBehaviour {
         GenerateGame.GenerateGameSingle.placeButtons();
     }
 
-    [Command]
-    public void CmdMakePlayers(Vector2 location)
-    {
-        RpcMakePlayers(location);
-    }
-
-    [ClientRpc]
-    public void RpcMakePlayers(Vector2 location)
-    {
-        GameController.GameControllerSingle.AddPlayer(location);
-    }
-
     public void RestartGame()
     {
         if (isServer)
@@ -306,7 +294,6 @@ public class Player : NetworkBehaviour {
         //GenerateGame.GenerateGameSingle.StartGameGeneration(colors);
         GameController.GameControllerSingle.ButtonClick(color);
     }
-
 
     // Update is called once per frame
     void Update()
