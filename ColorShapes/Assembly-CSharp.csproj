@@ -64,7 +64,9 @@
     <Compile Include="Assets\Scripts\ComputerPlayer.cs" />
     <Compile Include="Assets\Scripts\GameController.cs" />
     <Compile Include="Assets\Scripts\GenerateGame.cs" />
+    <Compile Include="Assets\Scripts\NetworkMan.cs" />
     <Compile Include="Assets\Scripts\Player.cs" />
+    <Compile Include="Assets\Scripts\SinglePlayer.cs" />
     <Reference Include="UnityEditor.StandardEvents">
       <HintPath>C:/Users/gingerben/Desktop/everything/unity projects/ColorShapes/Library/ScriptAssemblies/UnityEditor.StandardEvents.dll</HintPath>
     </Reference>

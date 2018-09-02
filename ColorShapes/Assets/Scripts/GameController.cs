@@ -8,9 +8,15 @@ public class GameController : MonoBehaviour {
 
     public List<GameObject> buttons;
     public GameObject localPlayer;
+    public GameObject SinglePlayerPrefab;
 
     public List<Player> Players;
     public int turn = 0;
+
+    public CanvasGroup CurrentMenu;
+    public CanvasGroup Menu1;
+    public CanvasGroup Menu2;
+    public CanvasGroup Menu3;
 
     //passing by ref not value; cant be a stuct
     public class Player
@@ -63,11 +69,130 @@ public class GameController : MonoBehaviour {
     void Start ()
     {
         //Players = new List<Player>();
+        Menu1 = GameObject.Find("Menu1").GetComponent<CanvasGroup>();
+        Menu2 = GameObject.Find("Menu2").GetComponent<CanvasGroup>();
+        Menu3 = GameObject.Find("Menu3").GetComponent<CanvasGroup>();
+        GameObject.Find("PlayButton").GetComponent<Button>().onClick.AddListener(() => PlayGameButton());
+        GameObject.Find("QuitButton").GetComponent<Button>().onClick.AddListener(() => QuitButton());
+        GameObject.Find("OnlineButton").GetComponent<Button>().onClick.AddListener(() => PlayOnlineButton());
+        GameObject.Find("ReturnToMainMenuButton").GetComponent<Button>().onClick.AddListener(() => BackButton());
+
+        CurrentMenu = Menu1;
     }
 	
 	// Update is called once per frame
-	void Update () {
+	void Update ()
+    {
+        //cant toggle if main menu or online menu
+        if (Input.GetKeyDown(KeyCode.Escape) && (CurrentMenu != Menu1 && CurrentMenu != Menu3))
+        {
+            //toggle menu on and off
+            CurrentMenu.alpha = (CurrentMenu.alpha + 1) % 2;
+            CurrentMenu.interactable = !CurrentMenu.interactable;
+            CurrentMenu.blocksRaycasts =!CurrentMenu.blocksRaycasts;
+        }
+    }
 
+    void PlayGameButton()
+    {
+        //set button to offline response
+        GameObject.Find("QuitButton").GetComponent<Button>().onClick.AddListener(() => QuitButton());
+        GameObject.Find("QuitButton").GetComponent<Button>().onClick.AddListener(() => NetworkManager.singleton.StopClient());
+
+        Instantiate(SinglePlayerPrefab);
+
+        //turn off current menu
+        CurrentMenu.alpha = 0;
+        CurrentMenu.interactable = false;
+        CurrentMenu.blocksRaycasts = false;
+
+        //change current menu to quit menu
+        CurrentMenu = Menu2;
+
+        //turn on menu to play
+        GenerateGame.GenerateGameSingle.EndGamePanel.alpha = 1;
+        GenerateGame.GenerateGameSingle.EndGamePanel.interactable = true;
+        GenerateGame.GenerateGameSingle.EndGamePanel.blocksRaycasts = true;
+    }
+
+    public void QuitButton()
+    {
+        Destroy(localPlayer);
+
+        //turn off current menu
+        CurrentMenu.alpha = 0;
+        CurrentMenu.interactable = false;
+        CurrentMenu.blocksRaycasts = false;
+
+        //change menu to select menu
+        CurrentMenu = Menu1;
+
+        //turn on current menu
+        CurrentMenu.alpha = 1;
+        CurrentMenu.interactable = true;
+        CurrentMenu.blocksRaycasts = true;
+
+        //turn off used game assests
+        GenerateGame.GenerateGameSingle.NewGame();
+
+        //turn off menu to play
+        GenerateGame.GenerateGameSingle.EndGamePanel.alpha = 0;
+        GenerateGame.GenerateGameSingle.EndGamePanel.interactable = false;
+        GenerateGame.GenerateGameSingle.EndGamePanel.blocksRaycasts = false;
+
+        //turn off menu to play
+        GenerateGame.GenerateGameSingle.StartGamePanel.alpha = 0;
+        GenerateGame.GenerateGameSingle.StartGamePanel.interactable = false;
+        GenerateGame.GenerateGameSingle.StartGamePanel.blocksRaycasts = false;
+
+    }
+
+    void PlayOnlineButton()
+    {
+        //turn off current menu
+        CurrentMenu.alpha = 0;
+        CurrentMenu.interactable = false;
+        CurrentMenu.blocksRaycasts = false;
+
+        //set to online menu
+        CurrentMenu = Menu3;
+
+        //turn on current menu
+        CurrentMenu.alpha = 1;
+        CurrentMenu.interactable = true;
+        CurrentMenu.blocksRaycasts = true;
+    }
+
+    void BackButton()
+    {
+        //turn off current menu
+        CurrentMenu.alpha = 0;
+        CurrentMenu.interactable = false;
+        CurrentMenu.blocksRaycasts = false;
+
+        //set to online menu
+        CurrentMenu = Menu1;
+
+        //turn on current menu
+        CurrentMenu.alpha = 1;
+        CurrentMenu.interactable = true;
+        CurrentMenu.blocksRaycasts = true;
+    }
+
+    public void startOnlineButton()
+    {
+        //turn off current menu
+        CurrentMenu.alpha = 0;
+        CurrentMenu.interactable = false;
+        CurrentMenu.blocksRaycasts = false;
+
+        //change current menu to quit menu
+        CurrentMenu = Menu2;
+
+        //turn on menu to play
+        GenerateGame.GenerateGameSingle.EndGamePanel.alpha = 1;
+        GenerateGame.GenerateGameSingle.EndGamePanel.interactable = true;
+        GenerateGame.GenerateGameSingle.EndGamePanel.blocksRaycasts = true;
     }
 
     public void Neighbor(int xOffSet, int yOffSet, ref int tempCountSides, ref int TotalAmountOneColor, Color buttonColor, Vector2 currentSquare, ref Queue<Vector2> pq, ref HashSet<Vector2> playerEdge, ref HashSet<Vector2> playerReachable)
@@ -99,7 +224,6 @@ public class GameController : MonoBehaviour {
                 playerEdge.Add(temp);
                 playerReachable.Remove(temp);
             }
-
         }
         //if color not correct add to reachable 
         else if (!playerReachable.Contains(temp))
@@ -140,7 +264,6 @@ public class GameController : MonoBehaviour {
             while (pq.Count != 0)
             {
                 Vector2 currentSquare = pq.Dequeue();
-                Vector2 temp;
                 int tempCountSides = 0;
 
                 bool right = currentSquare.x + 1 < GenerateGame.GenerateGameSingle.width;
@@ -529,7 +652,7 @@ public class GameController : MonoBehaviour {
             float tempScore = (CurPlayer.playerEdge.Count + CurPlayer.playerNotEdge.Count) / ((float)GenerateGame.GenerateGameSingle.width * (float)GenerateGame.GenerateGameSingle.height);
             CurPlayer.ScoreObj.GetComponent<Text>().text = "Player " + turn + " Score: " + (tempScore*100).ToString("00") + "%";
 
-            if (tempScore >= .5)
+            if (tempScore >= 1f/GenerateGame.GenerateGameSingle.numPlayers)
             {
                 GenerateGame.GenerateGameSingle.endGameText.enabled = true;
                 GenerateGame.GenerateGameSingle.endGameText.text = "Player " + turn + " Wins!";

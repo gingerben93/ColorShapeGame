@@ -93,7 +93,7 @@ public class ComputerPlayer : MonoBehaviour {
             offColors.Add(player.CurrentColor);
         }
 
-        Computers = HardComputer(6, GameController.GameControllerSingle.turn, 0, tempGameBoard, Computers, onColors, offColors);
+        Computers = HardComputer(4, GameController.GameControllerSingle.turn, 0, tempGameBoard, Computers, onColors, offColors);
 
         GameController.GameControllerSingle.ButtonClick(Computers[GameController.GameControllerSingle.turn].currentColor);
     }
@@ -452,7 +452,7 @@ public class ComputerPlayer : MonoBehaviour {
             newComps[turn].score += TotalAmountOneColor;
 
             //game is over
-            if (tempScore >= .5)
+            if (tempScore >= 1f / GenerateGame.GenerateGameSingle.numPlayers)
             {
                 //ComputerColor = currentColor;
                 return newComps;

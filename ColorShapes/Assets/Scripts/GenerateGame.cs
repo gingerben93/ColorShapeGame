@@ -2,10 +2,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.Networking;
 
 
-public class GenerateGame : NetworkBehaviour
+public class GenerateGame : MonoBehaviour
 {
 
     public GameObject[,] gameBoard;
@@ -28,8 +27,9 @@ public class GenerateGame : NetworkBehaviour
 
     public GameObject GamePieceContainer;
     public GameObject ColorButtonPanel;
-    CanvasGroup EndGamePanel;
-    CanvasGroup StartGamePanel;
+    public CanvasGroup Menu1;
+    public CanvasGroup EndGamePanel;
+    public CanvasGroup StartGamePanel;
     public GameObject ScorePanel;
     public Text endGameText;
 
@@ -54,19 +54,19 @@ public class GenerateGame : NetworkBehaviour
     {
         GamePieceContainer = GameObject.Find("Floor");
         ColorButtonPanel = GameObject.Find("ColorButtonPanel");
+        Menu1 = GameObject.Find("Menu1").GetComponent<CanvasGroup>();
         EndGamePanel = GameObject.Find("EndGamePanel").GetComponent<CanvasGroup>();
         StartGamePanel = GameObject.Find("StartGamePanel").GetComponent<CanvasGroup>();
         ScorePanel = GameObject.Find("ScorePanel");
         endGameText = GameObject.Find("EndGameText").GetComponent<Text>();
         mainCamera = GameObject.Find("Camera").GetComponent<Camera>();
 
-        EndGamePanel.alpha = 1;
-        EndGamePanel.interactable = true;
-        EndGamePanel.blocksRaycasts = true;
+        EndGamePanel.alpha = 0;
+        EndGamePanel.interactable = false;
+        EndGamePanel.blocksRaycasts = false;
         StartGamePanel.alpha = 0;
         StartGamePanel.interactable = false;
         StartGamePanel.blocksRaycasts = false;
-
         numPlayers = 2;
     }
 
@@ -85,8 +85,7 @@ public class GenerateGame : NetworkBehaviour
                 Colors[x + y*height] = color;
             }
         }
-        
-        //StartConitions();
+
         return Colors;
     }
 
@@ -196,8 +195,18 @@ public class GenerateGame : NetworkBehaviour
         {
             var tempBox = Instantiate(ButtonSquarePrefab, ColorButtonPanel.transform);
             tempBox.GetComponent<Image>().color = PickColor(y);
-            //set button method to color of button of the local player
-            tempBox.GetComponent<Button>().onClick.AddListener(() => GameController.GameControllerSingle.localPlayer.GetComponent<Player>().PlayerButtonClick(tempBox.GetComponent<Image>().color));
+            
+            //checl for single player or online
+            if (GameController.GameControllerSingle.localPlayer.GetComponent<Player>())
+            {
+                //set button method to color of button of the local player
+                tempBox.GetComponent<Button>().onClick.AddListener(() => GameController.GameControllerSingle.localPlayer.GetComponent<Player>().PlayerButtonClick(tempBox.GetComponent<Image>().color));
+            }
+            else
+            {
+                tempBox.GetComponent<Button>().onClick.AddListener(() => GameController.GameControllerSingle.localPlayer.GetComponent<SinglePlayer>().PlayerButtonClick(tempBox.GetComponent<Image>().color));
+            }
+
             GameController.GameControllerSingle.buttons.Add(tempBox);
         }
         

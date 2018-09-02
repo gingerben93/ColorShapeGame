@@ -52,6 +52,9 @@ public class Player : NetworkBehaviour {
         {
             //search for player tag to find local player
             tag = ("Player");
+            //if was playing single player remove it
+            Destroy(GameController.GameControllerSingle.localPlayer);
+
             GameController.GameControllerSingle.localPlayer = gameObject;
             GameObject.Find("NewGameButton").GetComponent<Button>().onClick.AddListener(() => NewGame());
             GameObject.Find("RestartGameButton").GetComponent<Button>().onClick.AddListener(() => RestartGame());
